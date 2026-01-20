@@ -25,27 +25,10 @@ export default function BlobCursor() {
       const target = document.elementFromPoint(clientX, clientY) as HTMLElement;
       if (!target) return null;
 
-      // Resume button
-      const resumeBtn = document.querySelector(".download-btn");
-      if (resumeBtn) {
-        const rect = resumeBtn.getBoundingClientRect();
-        if (
-          clientX >= rect.left &&
-          clientX <= rect.right &&
-          clientY >= rect.top &&
-          clientY <= rect.bottom
-        ) {
-          return {
-            type: "header",
-            bounds: new DOMRect(rect.left - 8, rect.top - 2, rect.width + 16, rect.height + 4),
-          };
-        }
-      }
-
-      // Contact button
-      const contactBtn = document.querySelector(".contact-button");
-      if (contactBtn) {
-        const rect = contactBtn.getBoundingClientRect();
+      // Nav links (Resume and Contact)
+      const navLinks = document.querySelectorAll(".nav-link");
+      for (const navLink of navLinks) {
+        const rect = navLink.getBoundingClientRect();
         if (
           clientX >= rect.left &&
           clientX <= rect.right &&
