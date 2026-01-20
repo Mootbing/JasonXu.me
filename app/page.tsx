@@ -1,12 +1,6 @@
 import Image from "next/image";
 
-const HERO_CONTENT = [
-  "I build 24/7/365",
-  "Was the kid taking calls in the bathrooms during high school",
-  "Now studying & building @ the University of Pennsylvania",
-  "At 16, my project was acquired by the United Nations",
-] as const;
-
+// Type Definitions
 interface InlineLink {
   text: string;
   url: string;
@@ -17,6 +11,19 @@ interface ContentWithLink {
   link: InlineLink;
   suffix?: string;
 }
+
+interface NavLink {
+  href: string;
+  label: string;
+}
+
+// Content Constants
+const HERO_CONTENT = [
+  "I build 24/7/365",
+  "Was the kid taking calls in the bathrooms during high school",
+  "Now studying & building @ the University of Pennsylvania",
+  "At 16, my project was acquired by the United Nations",
+] as const;
 
 const CONTENT_WITH_LINKS: ContentWithLink[] = [
   {
@@ -33,30 +40,47 @@ const CONTENT_WITH_LINKS: ContentWithLink[] = [
 const CLOSING_LINE = "I'm 20 now and looking for my next challenge";
 const EMAIL = "him@jasonxu.me";
 
-const FOOTER_LINKS = [
+const FOOTER_LINKS: readonly NavLink[] = [
   { href: "https://resume.jasonxu.me", label: "Resume" },
   { href: "https://contact.jasonxu.me", label: "Contact" },
   { href: "https://github.com/mootbing", label: "GitHub" },
   { href: "https://linkedin.com/in/xj1", label: "LinkedIn" },
 ] as const;
 
-const STORY_LINKS = [
+const STORY_LINKS: readonly NavLink[] = [
   { href: "https://17.jasonxu.me", label: "My Life @ 17" },
   { href: "https://hs.jasonxu.me", label: "HS Portfolio" },
 ] as const;
+
+// Style Constants
+const STYLES = {
+  montserrat: {
+    fontFamily: "var(--font-montserrat), sans-serif",
+    fontWeight: 300,
+  },
+  playfair: {
+    fontFamily: "var(--font-playfair), serif",
+    fontWeight: 300,
+  },
+  colors: {
+    primary: "#333",
+    secondary: "#666",
+    separator: "#ccc",
+  },
+} as const;
 
 export default function Home() {
   return (
     <div
       className="min-h-screen bg-white"
       style={{
-        fontFamily: "var(--font-montserrat), sans-serif",
-        fontWeight: 300,
-        color: "#333",
+        ...STYLES.montserrat,
+        color: STYLES.colors.primary,
       }}
     >
       <section className="min-h-screen flex items-center justify-center px-6 md:px-12">
-        <div className="max-w-3xl">
+        <div className="w-full max-w-3xl">
+          {/* Name Header */}
           <div className="flex items-center gap-3 mb-4">
             <Image
               src="/cow.svg"
@@ -68,9 +92,8 @@ export default function Home() {
             <p
               className="text-base md:text-lg"
               style={{
-                fontFamily: "var(--font-montserrat), sans-serif",
-                fontWeight: 300,
-                color: "#666",
+                ...STYLES.montserrat,
+                color: STYLES.colors.secondary,
                 letterSpacing: "0.1em",
               }}
             >
@@ -78,20 +101,21 @@ export default function Home() {
             </p>
           </div>
 
+          {/* Hero Heading */}
           <h1
             className="text-5xl md:text-6xl lg:text-7xl mb-6 leading-tight"
             style={{
-              fontFamily: "var(--font-playfair), serif",
-              fontWeight: 300,
-              color: "#333",
+              ...STYLES.playfair,
+              color: STYLES.colors.primary,
             }}
           >
             I chase dreams.
           </h1>
 
+          {/* Content Section */}
           <div
             className="space-y-6 text-base md:text-lg"
-            style={{ color: "#666", lineHeight: 1.7 }}
+            style={{ color: STYLES.colors.secondary, lineHeight: 1.7 }}
           >
             {HERO_CONTENT.map((text) => (
               <p key={text}>{text}</p>
@@ -115,15 +139,15 @@ export default function Home() {
             <p>{CLOSING_LINE}</p>
           </div>
 
+          {/* Email Contact */}
           <h2>
             <a
               href={`mailto:${EMAIL}`}
               rel="noopener noreferrer"
-              className="text-2xl md:text-3xl lg:text-3xl mt-6 leading-tight inline-block"
+              className="text-2xl md:text-3xl mt-6 leading-tight inline-block"
               style={{
-                fontFamily: "var(--font-playfair), serif",
-                fontWeight: 300,
-                color: "#333",
+                ...STYLES.playfair,
+                color: STYLES.colors.primary,
                 textDecoration: "none",
                 transformOrigin: "left center",
               }}
@@ -132,7 +156,11 @@ export default function Home() {
             </a>
           </h2>
 
-          <nav className="flex items-center gap-6 md:gap-8 mt-8 text-sm" style={{ color: "#666" }}>
+          {/* Navigation Links */}
+          <nav
+            className="flex flex-wrap items-center gap-x-6 gap-y-3 md:gap-x-8 mt-8 text-sm"
+            style={{ color: STYLES.colors.secondary }}
+          >
             {FOOTER_LINKS.map(({ href, label }) => (
               <a
                 key={href}
@@ -144,7 +172,6 @@ export default function Home() {
                 {label}
               </a>
             ))}
-            <span style={{ color: "#ccc" }}>|</span>
             {STORY_LINKS.map(({ href, label }) => (
               <a
                 key={href}
