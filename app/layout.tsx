@@ -4,20 +4,30 @@ import "./globals.css";
 import BlobCursor from "./components/BlobCursor";
 
 const playfairDisplay = Playfair_Display({
-  subsets: ['latin'],
-  weight: 'variable',
-  variable: '--font-playfair',
+  subsets: ["latin"],
+  weight: "variable",
+  variable: "--font-playfair",
+  display: "swap",
 });
 
 const montserrat = Montserrat({
-  subsets: ['latin'],
-  weight: ['300', '400', '600'],
-  variable: '--font-montserrat',
+  subsets: ["latin"],
+  weight: ["300", "400", "600"],
+  variable: "--font-montserrat",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
   title: "Jason Xu",
-  description: "Jason Xu",
+  description: "Jason Xu - Builder, Entrepreneur, and Student at the University of Pennsylvania",
+  keywords: ["Jason Xu", "entrepreneur", "developer", "University of Pennsylvania"],
+  authors: [{ name: "Jason Xu" }],
+  creator: "Jason Xu",
+  openGraph: {
+    title: "Jason Xu",
+    description: "Builder, Entrepreneur, and Student at the University of Pennsylvania",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
