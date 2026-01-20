@@ -53,7 +53,9 @@ export default function Home() {
             </p>
           </div>
 
-          <h2 href="mailto:him@jasonxu.me"
+          <h2>
+          <a href="mailto:him@jasonxu.me"
+            rel="noopener noreferrer"
              className="text-2xl md:text-3xl lg:text-3xl mt-6 leading-tight inline-block"
              style={{
                fontFamily: 'var(--font-playfair), serif',
@@ -63,6 +65,7 @@ export default function Home() {
                transformOrigin: 'left center'
              }}>
             him@jasonxu.me
+          </a>
           </h2>
         </div>
       </section>
