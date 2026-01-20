@@ -33,6 +33,18 @@ const CONTENT_WITH_LINKS: ContentWithLink[] = [
 const CLOSING_LINE = "I'm 20 now and looking for my next challenge";
 const EMAIL = "him@jasonxu.me";
 
+const FOOTER_LINKS = [
+  { href: "https://resume.jasonxu.me", label: "Resume" },
+  { href: "https://contact.jasonxu.me", label: "Contact" },
+  { href: "https://github.com/mootbing", label: "GitHub" },
+  { href: "https://linkedin.com/in/xj1", label: "LinkedIn" },
+] as const;
+
+const STORY_LINKS = [
+  { href: "https://17.jasonxu.me", label: "My Life @ 17" },
+  { href: "https://hs.jasonxu.me", label: "HS Portfolio" },
+] as const;
+
 export default function Home() {
   return (
     <div
@@ -100,6 +112,32 @@ export default function Home() {
               {EMAIL}
             </a>
           </h2>
+
+          <nav className="flex items-center gap-6 md:gap-8 mt-8 text-sm" style={{ color: "#666" }}>
+            {FOOTER_LINKS.map(({ href, label }) => (
+              <a
+                key={href}
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="nav-link"
+              >
+                {label}
+              </a>
+            ))}
+            <span style={{ color: "#ccc" }}>|</span>
+            {STORY_LINKS.map(({ href, label }) => (
+              <a
+                key={href}
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="nav-link"
+              >
+                {label}
+              </a>
+            ))}
+          </nav>
         </div>
       </section>
     </div>
