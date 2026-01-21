@@ -178,12 +178,7 @@ export default function Home() {
               </p>
             ))}
 
-            <p>
-                {CLOSING_LINE}
-                <span
-                  className="inline-block w-[1.5px] h-[1.1em] ml-1 mb-[4px] align-middle animate-blink blinking-cursor"
-                />
-              </p>
+            <p>{CLOSING_LINE}<span className="animate-blink" style={{ color: colors.secondary }}> ░</span></p>
           </div>
 
           {/* Email Contact */}

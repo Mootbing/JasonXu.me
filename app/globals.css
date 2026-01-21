@@ -134,13 +134,6 @@ body.inverted .inline-link {
   animation: blink 1s step-end infinite;
 }
 
-.blinking-cursor {
-  background: rgba(0, 0, 0, 0.1);
-}
-
-body.inverted .blinking-cursor {
-  background: rgba(204, 204, 204, 0.2);
-}
 
 /* Text Selection Highlight */
 ::selection {
