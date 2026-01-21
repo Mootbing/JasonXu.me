@@ -9,9 +9,9 @@ interface InlineLink {
   url: string;
 }
 
-interface ContentWithLink {
-  prefix: string;
-  link: InlineLink;
+interface HeroItem {
+  text: string;
+  link?: InlineLink;
   suffix?: string;
 }
 
@@ -21,21 +21,17 @@ interface NavLink {
 }
 
 // Content Constants
-const HERO_CONTENT = [
-  // "I build 24/7/365",
-  "Was the kid in high school caught skipping class to take calls in the bathroom",
-  // "I'm now building & studying CS @ UPenn",
-  "At 15, I got my first $150k offer",
-  "At 16, my project was acquired by the United Nations"
-] as const;
-
-const CONTENT_WITH_LINKS: ContentWithLink[] = [
+const HERO_CONTENT: HeroItem[] = [
+  { text: "Was the kid in high school caught skipping class to take calls in the bathroom" },
+  { text: "At 15, I got my first $150k offer" },
+  { text: "At 16, my project was acquired by the United Nations" },
   {
-    prefix: "At 17, I recieved international acclaim building ",
+    text: "At 17, I recieved international acclaim building ",
     link: { text: "17.JasonXu.me", url: "https://17.jasonxu.me" },
   },
+  { text: "At 18, I crossed 1M+ views across all social platforms" },
   {
-    prefix: "At 19, I became the #2 founding engineer at ",
+    text: "At 19, I became the #2 founding engineer at ",
     link: { text: "Icon.com", url: "https://icon.com" },
     suffix: " ($12M+ ARR)",
   },
@@ -159,21 +155,19 @@ export default function Home() {
             className="space-y-6 text-base md:text-lg transition-colors duration-300"
             style={{ color: colors.secondary, lineHeight: 1.7 }}
           >
-            {HERO_CONTENT.map((text) => (
-              <p key={text}>{text}</p>
-            ))}
-
-            {CONTENT_WITH_LINKS.map(({ prefix, link, suffix }) => (
-              <p key={link.url}>
-                {prefix}
-                <a
-                  href={link.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-link"
-                >
-                  {link.text}
-                </a>
+            {HERO_CONTENT.map(({ text, link, suffix }) => (
+              <p key={text}>
+                {text}
+                {link && (
+                  <a
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-link"
+                  >
+                    {link.text}
+                  </a>
+                )}
                 {suffix}
               </p>
             ))}
