@@ -41,7 +41,7 @@ const CONTENT_WITH_LINKS: ContentWithLink[] = [
   },
 ];
 
-const CLOSING_LINE = "I'm 20 now, writing the next line";
+const CLOSING_LINE = "I'm 20 now, writing the next chapter";
 const EMAIL = "him@jasonxu.me";
 
 const FOOTER_LINKS: readonly NavLink[] = [
