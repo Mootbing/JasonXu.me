@@ -66,14 +66,24 @@ const STYLES = {
     fontWeight: 300,
   },
   colors: {
-    primary: "#333",
-    secondary: "#666"
+    light: {
+      background: "#ffffff",
+      primary: "#333333",
+      secondary: "#666666",
+    },
+    dark: {
+      background: "#000000",
+      primary: "#cccccc",
+      secondary: "#999999",
+    },
   },
 } as const;
 
 export default function Home() {
   const [headingText, setHeadingText] = useState("I chase dreams.");
   const [isInverted, setIsInverted] = useState(false);
+
+  const colors = isInverted ? STYLES.colors.dark : STYLES.colors.light;
 
   const toggleHeading = () => {
     setHeadingText((prev) =>
@@ -89,6 +99,10 @@ export default function Home() {
     } else {
       document.body.classList.remove("inverted");
     }
+
+    return () => {
+      document.body.classList.remove("inverted");
+    };
   }, [isInverted]);
 
   return (
@@ -96,8 +110,8 @@ export default function Home() {
       className="min-h-screen transition-colors duration-300"
       style={{
         ...STYLES.montserrat,
-        backgroundColor: isInverted ? "#000" : "white",
-        color: isInverted ? "#ccc" : STYLES.colors.primary,
+        backgroundColor: colors.background,
+        color: colors.primary,
       }}
     >
       <section className="min-h-screen flex items-center justify-center px-6 md:px-12">
@@ -115,7 +129,7 @@ export default function Home() {
               className="text-base md:text-lg transition-colors duration-300"
               style={{
                 ...STYLES.montserrat,
-                color: isInverted ? "#999" : STYLES.colors.secondary,
+                color: colors.secondary,
                 letterSpacing: "0.1em",
               }}
             >
@@ -125,20 +139,24 @@ export default function Home() {
 
           {/* Hero Heading */}
           <h1
-            onClick={toggleHeading}
-            className="text-5xl md:text-6xl lg:text-7xl mb-6 leading-tight cursor-pointer transition-colors duration-300"
+            className="text-5xl md:text-6xl lg:text-7xl mb-6 leading-tight transition-colors duration-300"
             style={{
               ...STYLES.playfair,
-              color: isInverted ? "white" : STYLES.colors.primary,
+              color: colors.primary,
             }}
           >
-            {headingText}
+            <span
+              onClick={toggleHeading}
+              className="cursor-pointer inline-block"
+            >
+              {headingText}
+            </span>
           </h1>
 
           {/* Content Section */}
           <div
             className="space-y-6 text-base md:text-lg transition-colors duration-300"
-            style={{ color: isInverted ? "#999" : STYLES.colors.secondary, lineHeight: 1.7 }}
+            style={{ color: colors.secondary, lineHeight: 1.7 }}
           >
             {HERO_CONTENT.map((text) => (
               <p key={text}>{text}</p>
@@ -170,7 +188,7 @@ export default function Home() {
               className="text-2xl md:text-3xl mt-6 leading-tight inline-block transition-colors duration-300"
               style={{
                 ...STYLES.playfair,
-                color: isInverted ? "white" : STYLES.colors.primary,
+                color: colors.primary,
                 textDecoration: "none",
                 transformOrigin: "left center",
               }}
@@ -182,7 +200,7 @@ export default function Home() {
           {/* Navigation Links */}
           <nav
             className="flex flex-wrap items-center gap-x-6 gap-y-3 md:gap-x-8 mt-8 text-sm transition-colors duration-300"
-            style={{ color: isInverted ? "#999" : STYLES.colors.secondary }}
+            style={{ color: colors.secondary }}
           >
             {FOOTER_LINKS.map(({ href, label }) => (
               <a

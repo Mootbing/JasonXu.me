@@ -70,25 +70,25 @@ body {
 
 /* Inverted state cursor colors */
 body.inverted .blob-cursor {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(204, 204, 204, 0.2);
 }
 
 body.inverted .blob-cursor.hover-header,
 body.inverted .blob-cursor.hover-button {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(204, 204, 204, 0.15);
 }
 
 body.inverted .blob-cursor.hover-contact {
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(204, 204, 204, 0.3);
 }
 
 body.inverted .blob-cursor.hover-skill {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(204, 204, 204, 0.05);
 }
 
 body.inverted .blob-cursor.hover-underline {
-  background: #fff;
-  box-shadow: 0 0 8px 2px rgba(255, 255, 255, 0.15);
+  background: #cccccc;
+  box-shadow: 0 0 8px 2px rgba(204, 204, 204, 0.15);
 }
 
 /* Navigation Links */
@@ -117,5 +117,5 @@ body.inverted .blob-cursor.hover-underline {
 }
 
 body.inverted .inline-link {
-  color: #fff;
+  color: #cccccc;
 }
