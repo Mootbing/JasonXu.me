@@ -67,26 +67,38 @@ const STYLES = {
   },
   colors: {
     primary: "#333",
-    secondary: "#666",
-    separator: "#ccc",
+    secondary: "#666"
   },
 } as const;
 
 export default function Home() {
   const [headingText, setHeadingText] = useState("I chase dreams.");
+  const [isInverted, setIsInverted] = useState(false);
 
   const toggleHeading = () => {
     setHeadingText((prev) =>
       prev === "I chase dreams." ? "I build realities." : "I chase dreams."
     );
+    setIsInverted((prev) => !prev);
   };
+
+  // Update body class for cursor color inversion
+  if (typeof document !== "undefined") {
+    if (isInverted) {
+      document.body.classList.add("inverted");
+    } else {
+      document.body.classList.remove("inverted");
+    }
+  }
 
   return (
     <div
-      className="min-h-screen bg-white"
+      data-inverted={isInverted}
+      className="min-h-screen transition-colors duration-300"
       style={{
         ...STYLES.montserrat,
-        color: STYLES.colors.primary,
+        backgroundColor: isInverted ? "#000" : "white",
+        color: isInverted ? "#ccc" : STYLES.colors.primary,
       }}
     >
       <section className="min-h-screen flex items-center justify-center px-6 md:px-12">
@@ -98,13 +110,13 @@ export default function Home() {
               alt="Cow icon"
               width={48}
               height={48}
-              className="invert brightness-75"
+              className={`transition-all duration-300 ${isInverted ? "brightness-75" : "invert brightness-75"}`}
             />
             <p
-              className="text-base md:text-lg"
+              className="text-base md:text-lg transition-colors duration-300"
               style={{
                 ...STYLES.montserrat,
-                color: STYLES.colors.secondary,
+                color: isInverted ? "#999" : STYLES.colors.secondary,
                 letterSpacing: "0.1em",
               }}
             >
@@ -115,10 +127,10 @@ export default function Home() {
           {/* Hero Heading */}
           <h1
             onClick={toggleHeading}
-            className="text-5xl md:text-6xl lg:text-7xl mb-6 leading-tight cursor-pointer"
+            className="text-5xl md:text-6xl lg:text-7xl mb-6 leading-tight cursor-pointer transition-colors duration-300"
             style={{
               ...STYLES.playfair,
-              color: STYLES.colors.primary,
+              color: isInverted ? "white" : STYLES.colors.primary,
             }}
           >
             {headingText}
@@ -126,8 +138,8 @@ export default function Home() {
 
           {/* Content Section */}
           <div
-            className="space-y-6 text-base md:text-lg"
-            style={{ color: STYLES.colors.secondary, lineHeight: 1.7 }}
+            className="space-y-6 text-base md:text-lg transition-colors duration-300"
+            style={{ color: isInverted ? "#999" : STYLES.colors.secondary, lineHeight: 1.7 }}
           >
             {HERO_CONTENT.map((text) => (
               <p key={text}>{text}</p>
@@ -156,10 +168,10 @@ export default function Home() {
             <a
               href={`mailto:${EMAIL}`}
               rel="noopener noreferrer"
-              className="text-2xl md:text-3xl mt-6 leading-tight inline-block"
+              className="text-2xl md:text-3xl mt-6 leading-tight inline-block transition-colors duration-300"
               style={{
                 ...STYLES.playfair,
-                color: STYLES.colors.primary,
+                color: isInverted ? "white" : STYLES.colors.primary,
                 textDecoration: "none",
                 transformOrigin: "left center",
               }}
@@ -170,8 +182,8 @@ export default function Home() {
 
           {/* Navigation Links */}
           <nav
-            className="flex flex-wrap items-center gap-x-6 gap-y-3 md:gap-x-8 mt-8 text-sm"
-            style={{ color: STYLES.colors.secondary }}
+            className="flex flex-wrap items-center gap-x-6 gap-y-3 md:gap-x-8 mt-8 text-sm transition-colors duration-300"
+            style={{ color: isInverted ? "#999" : STYLES.colors.secondary }}
           >
             {FOOTER_LINKS.map(({ href, label }) => (
               <a

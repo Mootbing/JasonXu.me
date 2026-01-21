@@ -68,6 +68,29 @@ body {
   transition: background 0.2s, border-radius 0.2s, height 0.2s;
 }
 
+/* Inverted state cursor colors */
+body.inverted .blob-cursor {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+body.inverted .blob-cursor.hover-header,
+body.inverted .blob-cursor.hover-button {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+body.inverted .blob-cursor.hover-contact {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+body.inverted .blob-cursor.hover-skill {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+body.inverted .blob-cursor.hover-underline {
+  background: #fff;
+  box-shadow: 0 0 8px 2px rgba(255, 255, 255, 0.15);
+}
+
 /* Navigation Links */
 .nav-link {
   text-decoration: none;
@@ -89,6 +112,10 @@ body {
   text-decoration: none;
   display: inline-block;
   font-weight: 500;
-  transition: transform 0.2s ease;
+  transition: transform 0.2s ease, color 0.3s ease;
   transform-origin: left center;
+}
+
+body.inverted .inline-link {
+  color: #fff;
 }
