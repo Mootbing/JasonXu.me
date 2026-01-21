@@ -1,4 +1,7 @@
+"use client";
+
 import Image from "next/image";
+import { useState } from "react";
 
 // Type Definitions
 interface InlineLink {
@@ -20,9 +23,9 @@ interface NavLink {
 // Content Constants
 const HERO_CONTENT = [
   "I build 24/7/365",
-  "Was the kid taking calls in the bathrooms during high school",
-  "Now studying & building @ the University of Pennsylvania",
-  "At 16, my project was acquired by the United Nations",
+  "In high school, I was caught skipping class to take calls in the bathroom",
+  "I am now building whilst studying at the University of Pennsylvania",
+  "At 16, my project was acquired by the United Nations"
 ] as const;
 
 const CONTENT_WITH_LINKS: ContentWithLink[] = [
@@ -31,13 +34,13 @@ const CONTENT_WITH_LINKS: ContentWithLink[] = [
     link: { text: "17.JasonXu.me", url: "https://17.jasonxu.me" },
   },
   {
-    prefix: "At 19, I was #2 founding eng at ",
+    prefix: "At 19, I became the #2 founding engineer at ",
     link: { text: "Icon.com", url: "https://icon.com" },
-    suffix: " ($10M+ ARR)",
+    suffix: " ($12M+ ARR)",
   },
 ];
 
-const CLOSING_LINE = "I'm 20 now and looking for my next challenge";
+const CLOSING_LINE = "I am 20 now and looking for my next challenge";
 const EMAIL = "him@jasonxu.me";
 
 const FOOTER_LINKS: readonly NavLink[] = [
@@ -70,6 +73,14 @@ const STYLES = {
 } as const;
 
 export default function Home() {
+  const [headingText, setHeadingText] = useState("I chase dreams.");
+
+  const toggleHeading = () => {
+    setHeadingText((prev) =>
+      prev === "I chase dreams." ? "I build realities." : "I chase dreams."
+    );
+  };
+
   return (
     <div
       className="min-h-screen bg-white"
@@ -79,7 +90,7 @@ export default function Home() {
       }}
     >
       <section className="min-h-screen flex items-center justify-center px-6 md:px-12">
-        <div className="w-full max-w-3xl">
+        <div className="w-full max-w-3xl mt-6 mb-6">
           {/* Name Header */}
           <div className="flex items-center gap-3 mb-4">
             <Image
@@ -103,13 +114,14 @@ export default function Home() {
 
           {/* Hero Heading */}
           <h1
-            className="text-5xl md:text-6xl lg:text-7xl mb-6 leading-tight"
+            onClick={toggleHeading}
+            className="text-5xl md:text-6xl lg:text-7xl mb-6 leading-tight cursor-pointer"
             style={{
               ...STYLES.playfair,
               color: STYLES.colors.primary,
             }}
           >
-            I chase dreams.
+            {headingText}
           </h1>
 
           {/* Content Section */}
