@@ -83,17 +83,16 @@ export default function Home() {
   };
 
   // Update body class for cursor color inversion
-  if (typeof document !== "undefined") {
+  useEffect(() => {
     if (isInverted) {
       document.body.classList.add("inverted");
     } else {
       document.body.classList.remove("inverted");
     }
-  }
+  }, [isInverted]);
 
   return (
     <div
-      data-inverted={isInverted}
       className="min-h-screen transition-colors duration-300"
       style={{
         ...STYLES.montserrat,
