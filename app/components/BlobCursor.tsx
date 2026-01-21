@@ -34,6 +34,16 @@ export default function BlobCursor() {
   const lastHoverTypeRef = useRef<HoverType | null>(null);
 
   useEffect(() => {
+    // Hide cursor on touch devices
+    const handleTouchStart = () => {
+      const blob = blobRef.current;
+      if (blob) {
+        blob.style.display = "none";
+      }
+    };
+
+    window.addEventListener("touchstart", handleTouchStart, { once: true });
+
     const isPointInRect = (
       x: number,
       y: number,
@@ -210,6 +220,7 @@ export default function BlobCursor() {
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("scroll", handleScroll, true);
+      window.removeEventListener("touchstart", handleTouchStart);
       cancelAnimationFrame(animationId);
     };
   }, []);
