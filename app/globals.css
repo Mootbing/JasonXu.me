@@ -119,3 +119,36 @@ body.inverted .blob-cursor.hover-underline {
 body.inverted .inline-link {
   color: #cccccc;
 }
+
+/* Blinking Cursor Animation */
+@keyframes blink {
+  0%, 50% {
+    opacity: 1;
+  }
+  51%, 100% {
+    opacity: 0;
+  }
+}
+
+.animate-blink {
+  animation: blink 1s step-end infinite;
+}
+
+.blinking-cursor {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+body.inverted .blinking-cursor {
+  background: rgba(204, 204, 204, 0.2);
+}
+
+/* Text Selection Highlight */
+::selection {
+  background: #000000;
+  color: #ffffff;
+}
+
+body.inverted ::selection {
+  background: #ffffff;
+  color: #000000;
+}

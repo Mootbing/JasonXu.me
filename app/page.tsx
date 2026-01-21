@@ -23,26 +23,25 @@ interface NavLink {
 // Content Constants
 const HERO_CONTENT = [
   "I build 24/7/365",
-  "In high school, I got caught skipping class to take calls in the bathroom",
-  "I'm now building & studying CS @ UPenn",
+  // "In high school, I got caught skipping class to take calls in the bathroom",
+  // "I'm now building & studying CS @ UPenn",
   "At 15, I got my first $150k offer",
   "At 16, my project was acquired by the United Nations"
 ] as const;
 
 const CONTENT_WITH_LINKS: ContentWithLink[] = [
   {
-    prefix: "At 17, I built ",
+    prefix: "At 17, I recieved international acclaim building ",
     link: { text: "17.JasonXu.me", url: "https://17.jasonxu.me" },
-    suffix: ", recieving international acclaim",
   },
   {
-    prefix: "At 19, I was #2 founding eng at ",
+    prefix: "At 19, I became the #2 founding engineer at ",
     link: { text: "Icon.com", url: "https://icon.com" },
     suffix: " ($12M+ ARR)",
   },
 ];
 
-const CLOSING_LINE = "I'm 20 now, writing the next line.";
+const CLOSING_LINE = "I'm 20 now, actively writing the next line";
 const EMAIL = "him@jasonxu.me";
 
 const FOOTER_LINKS: readonly NavLink[] = [
@@ -179,7 +178,12 @@ export default function Home() {
               </p>
             ))}
 
-            <p>{CLOSING_LINE}</p>
+            <p>
+                {CLOSING_LINE}
+                <span
+                  className="inline-block w-[1.5px] h-[1.1em] ml-1 mb-[4px] align-middle animate-blink blinking-cursor"
+                />
+              </p>
           </div>
 
           {/* Email Contact */}
