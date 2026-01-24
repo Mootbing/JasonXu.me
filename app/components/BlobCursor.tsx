@@ -192,18 +192,22 @@ export default function BlobCursor() {
       }
 
       if (hover) {
-        blobX.current = smoothTransition(blobX.current, hover.bounds.left);
-        blobY.current = smoothTransition(blobY.current, hover.bounds.top);
+        // Target the center of the bounds for smooth transitions
+        const targetX = hover.bounds.left + hover.bounds.width / 2;
+        const targetY = hover.bounds.top + hover.bounds.height / 2;
+        blobX.current = smoothTransition(blobX.current, targetX);
+        blobY.current = smoothTransition(blobY.current, targetY);
         blobWidth.current = smoothTransition(blobWidth.current, hover.bounds.width);
         blobHeight.current = smoothTransition(blobHeight.current, hover.bounds.height);
-        blob.style.transform = "translate(0, 0)";
       } else {
         blobX.current = smoothTransition(blobX.current, mouseX.current);
         blobY.current = smoothTransition(blobY.current, mouseY.current);
         blobWidth.current = smoothTransition(blobWidth.current, DEFAULT_BLOB_SIZE);
         blobHeight.current = smoothTransition(blobHeight.current, DEFAULT_BLOB_SIZE);
-        blob.style.transform = "translate(-50%, -50%)";
       }
+
+      // Always use center-based positioning for smooth transitions
+      blob.style.transform = "translate(-50%, -50%)";
 
       blob.style.left = `${blobX.current}px`;
       blob.style.top = `${blobY.current}px`;
