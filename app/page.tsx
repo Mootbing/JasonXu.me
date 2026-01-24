@@ -179,6 +179,7 @@ export default function Home() {
           <h2>
             <a
               href="https://email.jasonxu.me"
+              target="_blank"
               rel="noopener noreferrer"
               className="text-2xl md:text-3xl mt-6 leading-tight inline-block transition-colors duration-300"
               style={{
