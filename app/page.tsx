@@ -43,8 +43,8 @@ const EMAIL = "him@jasonxu.me";
 const FOOTER_LINKS: readonly NavLink[] = [
   { href: "https://resume.jasonxu.me", label: "Resume" },
   { href: "https://contact.jasonxu.me", label: "Contact" },
-  { href: "https://github.com/mootbing", label: "GitHub" },
-  { href: "https://linkedin.com/in/xj1", label: "LinkedIn" },
+  { href: "https://github.jasonxu.me", label: "GitHub" },
+  { href: "https://linkedin.jasonxu.me", label: "LinkedIn" },
 ] as const;
 
 const STORY_LINKS: readonly NavLink[] = [
@@ -178,7 +178,7 @@ export default function Home() {
           {/* Email Contact */}
           <h2>
             <a
-              href={`mailto:${EMAIL}`}
+              href="https://email.jasonxu.me"
               rel="noopener noreferrer"
               className="text-2xl md:text-3xl mt-6 leading-tight inline-block transition-colors duration-300"
               style={{
