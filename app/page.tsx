@@ -41,6 +41,7 @@ const CLOSING_LINE = "I'm 20 now, writing the next chapter";
 const EMAIL = "him@jasonxu.me";
 
 const FOOTER_LINKS: readonly NavLink[] = [
+  // { href: "https://portfolio.jasonxu.me", label: "Portfolio" },
   { href: "https://resume.jasonxu.me", label: "Resume" },
   { href: "https://contact.jasonxu.me", label: "Contact" },
   { href: "https://github.jasonxu.me", label: "GitHub" },
@@ -48,8 +49,7 @@ const FOOTER_LINKS: readonly NavLink[] = [
 ] as const;
 
 const STORY_LINKS: readonly NavLink[] = [
-  { href: "https://17.jasonxu.me", label: "Journey" },
-  { href: "https://hs.jasonxu.me", label: "High School" },
+  { href: "https://17.jasonxu.me", label: "My Story (17.JasonXu.me)" },
 ] as const;
 
 // Style Constants
