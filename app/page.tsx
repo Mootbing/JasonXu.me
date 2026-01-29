@@ -49,7 +49,7 @@ const FOOTER_LINKS: readonly NavLink[] = [
 ] as const;
 
 const STORY_LINKS: readonly NavLink[] = [
-  { href: "https://17.jasonxu.me", label: "My Story (17.JasonXu.me)" },
+  { href: "https://17.jasonxu.me", label: "My Life Story (Won Design Awards)" },
 ] as const;
 
 // Style Constants
