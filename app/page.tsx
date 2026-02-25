@@ -23,13 +23,13 @@ interface NavLink {
 // Content Constants
 const HERO_CONTENT: HeroItem[] = [
   { text: "Was the kid in high school caught skipping class to take calls in the bathroom" },
-  { text: "At 15, I got my first $150k offer" },
+  // { text: "At 15, I got my first $150k offer" },
   { text: "At 16, my project was acquired by the United Nations" },
   {
     text: "At 17, I recieved international acclaim building ",
     link: { text: "17.JasonXu.me", url: "https://17.jasonxu.me" },
   },
-  { text: "At 18, I crossed 1M+ views across all social platforms" },
+  // { text: "At 18, I crossed 1M+ views across all social platforms" },
   {
     text: "At 19, I became the #2 founding engineer at ",
     link: { text: "Icon.com", url: "https://icon.com" },
