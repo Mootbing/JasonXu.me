@@ -42,12 +42,12 @@ const EMAIL = "him@jasonxu.me";
 
 const FOOTER_LINKS: readonly NavLink[] = [
   { href: "https://resume.jasonxu.me", label: "Resume" },
-  { href: "https://contact.jasonxu.me", label: "Contact" },
-  { href: "https://portfolio.jasonxu.me", label: "Portfolio" }
+  { href: "https://portfolio.jasonxu.me", label: "Portfolio" },
+  { href: "https://linkedin.com/in/xj1", label: "LinkedIn" },
 ] as const;
 
 const STORY_LINKS: readonly NavLink[] = [
-  { href: "https://17.jasonxu.me", label: "My Lore" },
+  { href: "https://17.jasonxu.me", label: "Lore" },
 ] as const;
 
 // Style Constants
