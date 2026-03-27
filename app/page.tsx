@@ -37,7 +37,7 @@ const HERO_CONTENT: HeroItem[] = [
   },
 ];
 
-const CLOSING_LINE = "I'm 20 now, writing the next chapter";
+const CLOSING_LINE = "I'm 20 (highkey unc) now, writing the next chapter";
 const EMAIL = "him@jasonxu.me";
 
 const FOOTER_LINKS: readonly NavLink[] = [
