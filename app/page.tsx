@@ -41,7 +41,7 @@ const CLOSING_LINE = "I'm 20 (highkey unc) now, writing the next chapter";
 const EMAIL = "him@jasonxu.me";
 
 const FOOTER_LINKS: readonly NavLink[] = [
-  { href: "https://resume.jasonxu.me", label: "Resume" },
+  // { href: "https://resume.jasonxu.me", label: "Resume" },
   { href: "https://portfolio.jasonxu.me", label: "Portfolio" },
   { href: "https://linkedin.jasonxu.me", label: "LinkedIn" },
 ] as const;
