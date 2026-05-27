@@ -23,7 +23,7 @@ const HERO_CONTENT: HeroItem[] = [
   [{ text: "Was the kid in high school caught skipping class to take calls in the bathroom" }],
   [{ text: "At 16, my project was acquired by the United Nations" }],
   [
-    { text: "At 17, I recieved international acclaim building " },
+    { text: "At 17, I recieved international awards building " },
     { link: { text: "17.JasonXu.me", url: "https://17.jasonxu.me" } },
   ],
   [
@@ -32,12 +32,8 @@ const HERO_CONTENT: HeroItem[] = [
     { text: " ($12M+ ARR)" },
   ],
   [
-    { text: "I'm 20 rn, building " },
-    { link: { text: "Resonance", url: "https://rsnc.ai" } },
-    { text: " backed by " },
-    { link: { text: "2048", url: "https://2048.vc" } },
-    { text: " and " },
-    { link: { text: "Beta", url: "https://beta.capital" } },
+    { text: "I'm 20 now & just raised $250k to build " },
+    { link: { text: "Resonance Labs", url: "https://rsnc.ai" }}
   ],
 ];
 
