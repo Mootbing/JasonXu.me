@@ -9,11 +9,9 @@ interface InlineLink {
   url: string;
 }
 
-interface HeroItem {
-  text: string;
-  link?: InlineLink;
-  suffix?: string;
-}
+type HeroSegment = { text: string } | { link: InlineLink };
+
+type HeroItem = HeroSegment[];
 
 interface NavLink {
   href: string;
@@ -22,22 +20,25 @@ interface NavLink {
 
 // Content Constants
 const HERO_CONTENT: HeroItem[] = [
-  { text: "Was the kid in high school caught skipping class to take calls in the bathroom" },
-  { text: "At 16, my project was acquired by the United Nations" },
-  {
-    text: "At 17, I recieved international acclaim building ",
-    link: { text: "17.JasonXu.me", url: "https://17.jasonxu.me" },
-  },
-  {
-    text: "At 19, I became the #2 founding engineer at ",
-    link: { text: "Icon.com", url: "https://icon.com" },
-    suffix: " ($12M+ ARR)",
-  },
-  {
-    text: "I'm 20 now, building ",
-    link: { text: "rsnc.ai", url: "https://rsnc.ai" },
-    suffix: ", backed by 🤫",
-  },
+  [{ text: "Was the kid in high school caught skipping class to take calls in the bathroom" }],
+  [{ text: "At 16, my project was acquired by the United Nations" }],
+  [
+    { text: "At 17, I recieved international acclaim building " },
+    { link: { text: "17.JasonXu.me", url: "https://17.jasonxu.me" } },
+  ],
+  [
+    { text: "At 19, I became the #2 founding engineer at " },
+    { link: { text: "Icon.com", url: "https://icon.com" } },
+    { text: " ($12M+ ARR)" },
+  ],
+  [
+    { text: "I'm 20 rn, building " },
+    { link: { text: "Resonance Labs", url: "https://rsnc.ai" } },
+    { text: " backed by " },
+    { link: { text: "2048", url: "https://2048.vc" } },
+    { text: " and " },
+    { link: { text: "Beta", url: "https://beta.capital" } },
+  ],
 ];
 
 const EMAIL = "him@jasonxu.me";
@@ -155,20 +156,23 @@ export default function Home() {
             className="space-y-6 text-base md:text-lg transition-colors duration-300"
             style={{ color: colors.secondary, lineHeight: 1.7 }}
           >
-            {HERO_CONTENT.map(({ text, link, suffix }, index) => (
-              <p key={text}>
-                {text}
-                {link && (
-                  <a
-                    href={link.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-link"
-                  >
-                    {link.text}
-                  </a>
+            {HERO_CONTENT.map((segments, index) => (
+              <p key={index}>
+                {segments.map((segment, segmentIndex) =>
+                  "link" in segment ? (
+                    <a
+                      key={segmentIndex}
+                      href={segment.link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-link"
+                    >
+                      {segment.link.text}
+                    </a>
+                  ) : (
+                    <span key={segmentIndex}>{segment.text}</span>
+                  )
                 )}
-                {suffix}
                 {index === HERO_CONTENT.length - 1 && (
                   <span className="animate-blink" style={{ color: colors.secondary }}> ░</span>
                 )}
