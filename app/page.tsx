@@ -33,7 +33,7 @@ const HERO_CONTENT: HeroItem[] = [
   ],
   [
     { text: "I'm 20 rn, building " },
-    { link: { text: "Resonance Labs", url: "https://rsnc.ai" } },
+    { link: { text: "Resonance", url: "https://rsnc.ai" } },
     { text: " backed by " },
     { link: { text: "2048", url: "https://2048.vc" } },
     { text: " and " },
