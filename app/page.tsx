@@ -91,16 +91,25 @@ const STYLES = {
 
 export default function Home() {
   const colors = STYLES.colors.light;
+  const isTextSegment = (segment: HeroSegment): segment is { text: string } =>
+    "text" in segment;
+
   const isBulletItem = (segments: HeroItem) =>
     segments.length > 0 &&
-    "text" in segments[0] &&
+    isTextSegment(segments[0]) &&
     segments[0].text.startsWith("- ");
 
   const getHeroItemClassName = (segments: HeroItem, index: number) => {
     if (index === 0) return undefined;
 
     const previousSegments = HERO_CONTENT[index - 1];
-    if (isBulletItem(segments) && (isBulletItem(previousSegments) || previousSegments[0].text === "prev.")) {
+    const previousFirstSegment = previousSegments[0];
+
+    if (
+      isBulletItem(segments) &&
+      (isBulletItem(previousSegments) ||
+        (isTextSegment(previousFirstSegment) && previousFirstSegment.text === "prev."))
+    ) {
       return "mt-2";
     }
 
