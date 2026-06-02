@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useEffect } from "react";
 
 // Type Definitions
 interface InlineLink {
@@ -9,7 +8,7 @@ interface InlineLink {
   url: string;
 }
 
-type HeroSegment = { text: string } | { link: InlineLink };
+type HeroSegment = { text: string } | { bold: string } | { lineBreak: true } | { link: InlineLink };
 
 type HeroItem = HeroSegment[];
 
@@ -20,20 +19,37 @@ interface NavLink {
 
 // Content Constants
 const HERO_CONTENT: HeroItem[] = [
-  [{ text: "Was the kid in high school caught skipping class to take calls in the bathroom" }],
-  [{ text: "At 16, my project was acquired by the United Nations" }],
   [
-    { text: "At 17, I recieved international awards building " },
-    { link: { text: "17.JasonXu.me", url: "https://17.jasonxu.me" } },
+    { text: "Founded & building " },
+    { link: { text: "Resonance", url: "https://rsnc.ai" } },
+    { text: " in San Francisco" },
   ],
   [
-    { text: "At 19, I became the #2 founding engineer at " },
-    { link: { text: "Icon.com", url: "https://icon.com" } },
-    { text: " ($12M+ ARR)" },
+    { text: "Previously..." },
   ],
   [
-    { text: "I'm 20 now & just raised $250k to build " },
-    { link: { text: "Resonance Labs", url: "https://rsnc.ai" }}
+    { text: "- #2 Founding Engineer @ " },
+    { link: { text: "Icon", url: "https://icon.com" } },
+    { text: " ($12M ARR)" },
+  ],
+  [
+    { text: "- Scout @ " },
+    { link: { text: "Soma Capital", url: "https://somacap.com/" } },
+    { text: " ($1B AUM)" },
+  ],
+  [
+    { text: "- ML & PL @ " },
+    { link: { text: "Penn Medicine", url: "https://www.pennmedicine.org/" } },
+  ],
+  [
+    { text: "- Content Strategist @ " },
+    { link: { text: "Blackbox", url: "https://blackbox.ai" } },
+    { text: " (1M+ views)" },
+  ],
+  [
+    { text: "- SWE & PM @ " },
+    { link: { text: "United Nations", url: "https://un.org" } },
+    { text: " (acq.)" },
   ],
 ];
 
@@ -74,30 +90,22 @@ const STYLES = {
 } as const;
 
 export default function Home() {
-  const [headingText, setHeadingText] = useState("I chase dreams.");
-  const [isInverted, setIsInverted] = useState(false);
+  const colors = STYLES.colors.light;
+  const isBulletItem = (segments: HeroItem) =>
+    segments.length > 0 &&
+    "text" in segments[0] &&
+    segments[0].text.startsWith("- ");
 
-  const colors = isInverted ? STYLES.colors.dark : STYLES.colors.light;
+  const getHeroItemClassName = (segments: HeroItem, index: number) => {
+    if (index === 0) return undefined;
 
-  const toggleHeading = () => {
-    setHeadingText((prev) =>
-      prev === "I chase dreams." ? "I build realities." : "I chase dreams."
-    );
-    setIsInverted((prev) => !prev);
-  };
-
-  // Update body class for cursor color inversion
-  useEffect(() => {
-    if (isInverted) {
-      document.body.classList.add("inverted");
-    } else {
-      document.body.classList.remove("inverted");
+    const previousSegments = HERO_CONTENT[index - 1];
+    if (isBulletItem(segments) && (isBulletItem(previousSegments) || previousSegments[0].text === "Previously...")) {
+      return "mt-2";
     }
 
-    return () => {
-      document.body.classList.remove("inverted");
-    };
-  }, [isInverted]);
+    return "mt-6";
+  };
 
   return (
     <div
@@ -117,7 +125,7 @@ export default function Home() {
               alt="Cow icon"
               width={48}
               height={48}
-              className={`transition-all duration-300 ${isInverted ? "brightness-75" : "invert brightness-75"}`}
+              className="transition-all duration-300 invert brightness-75"
             />
             <p
               className="text-base md:text-lg transition-colors duration-300"
@@ -139,21 +147,16 @@ export default function Home() {
               color: colors.primary,
             }}
           >
-            <span
-              onClick={toggleHeading}
-              className="cursor-pointer inline-block"
-            >
-              {headingText}
-            </span>
+            <span>I chase dreams.</span>
           </h1>
 
           {/* Content Section */}
           <div
-            className="space-y-6 text-base md:text-lg transition-colors duration-300"
+            className="text-base md:text-lg transition-colors duration-300"
             style={{ color: colors.secondary, lineHeight: 1.7 }}
           >
             {HERO_CONTENT.map((segments, index) => (
-              <p key={index}>
+              <p key={index} className={getHeroItemClassName(segments, index)}>
                 {segments.map((segment, segmentIndex) =>
                   "link" in segment ? (
                     <a
@@ -165,11 +168,15 @@ export default function Home() {
                     >
                       {segment.link.text}
                     </a>
+                  ) : "bold" in segment ? (
+                    <strong key={segmentIndex}>{segment.bold}</strong>
+                  ) : "lineBreak" in segment ? (
+                    <br key={segmentIndex} />
                   ) : (
                     <span key={segmentIndex}>{segment.text}</span>
                   )
                 )}
-                {index === HERO_CONTENT.length - 1 && (
+                {index === 0 && (
                   <span className="animate-blink" style={{ color: colors.secondary }}> ░</span>
                 )}
               </p>

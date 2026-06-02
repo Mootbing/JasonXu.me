@@ -134,8 +134,8 @@ export default function BlobCursor() {
         }
       }
 
-      // Check h1/h2 headers
-      const header = target.closest("h1, h2");
+      // Check secondary headers
+      const header = target.closest("h2");
       if (header) {
         const range = document.createRange();
         range.selectNodeContents(header);
