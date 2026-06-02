@@ -20,7 +20,7 @@ interface NavLink {
 // Content Constants
 const HERO_CONTENT: HeroItem[] = [
   [
-    { text: "Currently investigating human-ai emotional " },
+    { text: "Investigating human-ai emotional " },
     { link: { text: "Resonance", url: "https://rsnc.ai" } },
     { text: " in San Francisco, California." },
   ],
