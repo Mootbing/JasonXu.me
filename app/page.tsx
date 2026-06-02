@@ -22,10 +22,10 @@ const HERO_CONTENT: HeroItem[] = [
   [
     { text: "Founded & building " },
     { link: { text: "Resonance", url: "https://rsnc.ai" } },
-    { text: " in San Francisco" },
+    { text: " in San Francisco." },
   ],
   [
-    { text: "Prev." },
+    { text: "prev." },
   ],
   [
     { text: "- #2 Founding Engineer @ " },
@@ -100,7 +100,7 @@ export default function Home() {
     if (index === 0) return undefined;
 
     const previousSegments = HERO_CONTENT[index - 1];
-    if (isBulletItem(segments) && (isBulletItem(previousSegments) || previousSegments[0].text === "Prev.")) {
+    if (isBulletItem(segments) && (isBulletItem(previousSegments) || previousSegments[0].text === "prev.")) {
       return "mt-2";
     }
 
