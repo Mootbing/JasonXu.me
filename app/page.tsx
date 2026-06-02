@@ -25,7 +25,7 @@ const HERO_CONTENT: HeroItem[] = [
     { text: " in San Francisco" },
   ],
   [
-    { text: "Previously..." },
+    { text: "Prev." },
   ],
   [
     { text: "- #2 Founding Engineer @ " },
@@ -100,7 +100,7 @@ export default function Home() {
     if (index === 0) return undefined;
 
     const previousSegments = HERO_CONTENT[index - 1];
-    if (isBulletItem(segments) && (isBulletItem(previousSegments) || previousSegments[0].text === "Previously...")) {
+    if (isBulletItem(segments) && (isBulletItem(previousSegments) || previousSegments[0].text === "Prev.")) {
       return "mt-2";
     }
 
