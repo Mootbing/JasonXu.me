@@ -19,11 +19,12 @@ interface InlineLink {
     zoom?: number;
     radius?: number;
     size?: number;
-    fit?: "cover" | "contain";
+    fit?: "cover" | "contain" | "fill";
     dy?: number;
     grayscale?: boolean;
     invert?: boolean;
     brightness?: number;
+    bg?: string;
   };
 }
 
@@ -62,7 +63,7 @@ const HERO_CONTENT: HeroItem[] = [
       link: {
         text: "Icon",
         url: "https://icon.com",
-        icon: { src: "/icon.png", alt: "Icon", zoom: 1.5, dy: 1 },
+        icon: { src: "/icon.png", alt: "Icon", dy: 1 },
       },
     },
     { text: " ($12M ARR)" },
@@ -77,6 +78,17 @@ const HERO_CONTENT: HeroItem[] = [
       },
     },
     { text: " ($1B AUM)" },
+  ],
+  [
+    { text: "- Founder in Residence @ " },
+    {
+      link: {
+        text: "Photon",
+        url: "https://photon.codes",
+        icon: { src: "/photon.png", alt: "Photon" },
+      },
+    },
+    { text: " (0.0042%)" },
   ],
   [
     { text: "- ML & PL @ " },
@@ -94,7 +106,7 @@ const HERO_CONTENT: HeroItem[] = [
       link: {
         text: "Blackbox",
         url: "https://blackbox.ai",
-        icon: { src: "/blackbox.png", alt: "Blackbox", zoom: 1.3 },
+        icon: { src: "/blackbox.png", alt: "Blackbox" },
       },
     },
     { text: " (1M+ views)" },
@@ -105,7 +117,7 @@ const HERO_CONTENT: HeroItem[] = [
       link: {
         text: "United Nations",
         url: "https://un.org",
-        icon: { src: "/un.png", alt: "United Nations", radius: 0, fit: "contain", size: 20, grayscale: true, brightness: 0.15 },
+        icon: { src: "/un.png", alt: "United Nations", size: 22, grayscale: true, brightness: 0.1, zoom: 1, fit: "contain" },
       },
     },
     { text: " (acq.)" },
@@ -226,6 +238,7 @@ export default function Home() {
                             height: `${segment.link.icon.size ?? 18}px`,
                             borderRadius: `${segment.link.icon.radius ?? 5}px`,
                             marginTop: `${-4 + (segment.link.icon.dy ?? 0)}px`,
+                            backgroundColor: segment.link.icon.bg,
                           }}
                         >
                           <Image
@@ -236,6 +249,8 @@ export default function Home() {
                             className={`h-full w-full ${
                               segment.link.icon.fit === "contain"
                                 ? "object-contain"
+                                : segment.link.icon.fit === "fill"
+                                ? "object-fill"
                                 : "object-cover"
                             }`}
                             style={{
