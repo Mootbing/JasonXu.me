@@ -6,9 +6,32 @@ import Image from "next/image";
 interface InlineLink {
   text: string;
   url: string;
+  // Brand logo shown before the link text (and clickable as part of the link).
+  // `size` sets the clip-box px (default 18), `radius` its corner rounding px
+  // (default 5), `zoom` scales the image inside the box, `fit` chooses object-fit
+  // cover (default) or contain, `dy` nudges it down (px, negative = up), and
+  // `grayscale` renders it black & white, `invert` inverts its colors, and
+  // `brightness` (e.g. 1.3) scales luminance — useful to whiten a near-black
+  // background after inverting.
+  icon?: {
+    src: string;
+    alt: string;
+    zoom?: number;
+    radius?: number;
+    size?: number;
+    fit?: "cover" | "contain";
+    dy?: number;
+    grayscale?: boolean;
+    invert?: boolean;
+    brightness?: number;
+  };
 }
 
-type HeroSegment = { text: string } | { bold: string } | { lineBreak: true } | { link: InlineLink };
+type HeroSegment =
+  | { text: string }
+  | { bold: string }
+  | { lineBreak: true }
+  | { link: InlineLink };
 
 type HeroItem = HeroSegment[];
 
@@ -21,34 +44,70 @@ interface NavLink {
 const HERO_CONTENT: HeroItem[] = [
   [
     { text: "Investigating human-ai emotional " },
-    { link: { text: "Resonance", url: "https://rsnc.ai" } },
+    {
+      link: {
+        text: "Resonance",
+        url: "https://rsnc.ai",
+        icon: { src: "/pally.svg", alt: "Pally" },
+      },
+    },
     { text: " in San Francisco, California." },
   ],
   [
-    { text: "prev." },
+    { text: "Previously I was..." },
   ],
   [
     { text: "- #2 Founding Engineer @ " },
-    { link: { text: "Icon", url: "https://icon.com" } },
+    {
+      link: {
+        text: "Icon",
+        url: "https://icon.com",
+        icon: { src: "/icon.png", alt: "Icon", zoom: 1.5, dy: 1 },
+      },
+    },
     { text: " ($12M ARR)" },
   ],
   [
     { text: "- Scout @ " },
-    { link: { text: "Soma Capital", url: "https://somacap.com/" } },
+    {
+      link: {
+        text: "Soma Capital",
+        url: "https://somacap.com/",
+        icon: { src: "/soma.png", alt: "Soma Capital", fit: "contain" },
+      },
+    },
     { text: " ($1B AUM)" },
   ],
   [
     { text: "- ML & PL @ " },
-    { link: { text: "Penn Medicine", url: "https://www.pennmedicine.org/" } },
+    {
+      link: {
+        text: "Penn Medicine",
+        url: "https://www.pennmedicine.org/",
+        icon: { src: "/penn.png", alt: "Penn Medicine", size: 20, dy: 1, grayscale: true },
+      },
+    },
   ],
   [
     { text: "- Content Strategist @ " },
-    { link: { text: "Blackbox", url: "https://blackbox.ai" } },
+    {
+      link: {
+        text: "Blackbox",
+        url: "https://blackbox.ai",
+        icon: { src: "/blackbox.png", alt: "Blackbox", zoom: 1.3 },
+      },
+    },
     { text: " (1M+ views)" },
   ],
   [
     { text: "- SWE & PM @ " },
-    { link: { text: "United Nations", url: "https://un.org" } },
+    {
+      link: {
+        text: "United Nations",
+        url: "https://un.org",
+        icon: { src: "/un.png", alt: "United Nations", radius: 0, fit: "contain", size: 20, grayscale: true, brightness: 0.15 },
+      },
+    },
     { text: " (acq.)" },
   ],
 ];
@@ -91,29 +150,13 @@ const STYLES = {
 
 export default function Home() {
   const colors = STYLES.colors.light;
-  const isTextSegment = (segment: HeroSegment): segment is { text: string } =>
-    "text" in segment;
 
-  const isBulletItem = (segments: HeroItem) =>
-    segments.length > 0 &&
-    isTextSegment(segments[0]) &&
-    segments[0].text.startsWith("- ");
-
-  const getHeroItemClassName = (segments: HeroItem, index: number) => {
+  const getHeroItemClassName = (index: number) => {
     if (index === 0) return undefined;
 
-    const previousSegments = HERO_CONTENT[index - 1];
-    const previousFirstSegment = previousSegments[0];
-
-    if (
-      isBulletItem(segments) &&
-      (isBulletItem(previousSegments) ||
-        (isTextSegment(previousFirstSegment) && previousFirstSegment.text === "prev."))
-    ) {
-      return "mt-2";
-    }
-
-    return "mt-6";
+    // The "Ex-" label (index 1) is spaced away from the intro; the experience
+    // entries that follow it (index > 1) form a tight group beneath it.
+    return index > 1 ? "mt-2" : "mt-6";
   };
 
   return (
@@ -165,7 +208,7 @@ export default function Home() {
             style={{ color: colors.secondary, lineHeight: 1.7 }}
           >
             {HERO_CONTENT.map((segments, index) => (
-              <p key={index} className={getHeroItemClassName(segments, index)}>
+              <p key={index} className={getHeroItemClassName(index)}>
                 {segments.map((segment, segmentIndex) =>
                   "link" in segment ? (
                     <a
@@ -175,6 +218,43 @@ export default function Home() {
                       rel="noopener noreferrer"
                       className="inline-link"
                     >
+                      {segment.link.icon && (
+                        <span
+                          className="inline-block align-middle mr-1 overflow-hidden"
+                          style={{
+                            width: `${segment.link.icon.size ?? 18}px`,
+                            height: `${segment.link.icon.size ?? 18}px`,
+                            borderRadius: `${segment.link.icon.radius ?? 5}px`,
+                            marginTop: `${-4 + (segment.link.icon.dy ?? 0)}px`,
+                          }}
+                        >
+                          <Image
+                            src={segment.link.icon.src}
+                            alt={segment.link.icon.alt}
+                            width={segment.link.icon.size ?? 18}
+                            height={segment.link.icon.size ?? 18}
+                            className={`h-full w-full ${
+                              segment.link.icon.fit === "contain"
+                                ? "object-contain"
+                                : "object-cover"
+                            }`}
+                            style={{
+                              ...(segment.link.icon.zoom
+                                ? { transform: `scale(${segment.link.icon.zoom})` }
+                                : {}),
+                              filter:
+                                [
+                                  segment.link.icon.grayscale && "grayscale(1)",
+                                  segment.link.icon.invert && "invert(1)",
+                                  segment.link.icon.brightness &&
+                                    `brightness(${segment.link.icon.brightness})`,
+                                ]
+                                  .filter(Boolean)
+                                  .join(" ") || undefined,
+                            }}
+                          />
+                        </span>
+                      )}
                       {segment.link.text}
                     </a>
                   ) : "bold" in segment ? (
