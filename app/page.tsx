@@ -99,6 +99,7 @@ const HERO_CONTENT: HeroItem[] = [
         icon: { src: "/penn.png", alt: "Penn Medicine", size: 20, dy: 1, grayscale: true },
       },
     },
+    { text: " (Prof. Rajapakse)" },
   ],
   [
     { text: "- Content Strategist @ " },
@@ -120,7 +121,7 @@ const HERO_CONTENT: HeroItem[] = [
         icon: { src: "/un.png", alt: "United Nations", size: 22, grayscale: true, brightness: 0.1, zoom: 1, fit: "contain" },
       },
     },
-    { text: " (acq.)" },
+    { text: " (acq. @ 16)" },
   ],
 ];
 
