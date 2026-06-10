@@ -44,15 +44,22 @@ interface NavLink {
 // Content Constants
 const HERO_CONTENT: HeroItem[] = [
   [
-    { text: "Investigating human-ai emotional " },
+    { text: "Currently building " },
+    {
+      link: {
+        text: "Emocentric",
+        url: "https://www.emo.studio",
+        icon: { src: "/emocentric.svg", alt: "Emocentric" },
+      },
+    },
+    { text: ", Co-founding " },
     {
       link: {
         text: "Resonance",
         url: "https://rsnc.ai",
         icon: { src: "/pally.svg", alt: "Pally" },
       },
-    },
-    { text: " in San Francisco, California." },
+    }
   ],
   [
     { text: "Previously I was..." },
@@ -88,7 +95,7 @@ const HERO_CONTENT: HeroItem[] = [
         icon: { src: "/photon.png", alt: "Photon" },
       },
     },
-    { text: " (0.0042%)" },
+    { text: " (0.375%)" },
   ],
   [
     { text: "- ML & PL @ " },
@@ -110,7 +117,7 @@ const HERO_CONTENT: HeroItem[] = [
         icon: { src: "/blackbox.png", alt: "Blackbox" },
       },
     },
-    { text: " (1M+ views)" },
+    { text: " (2M+ views)" },
   ],
   [
     { text: "- SWE & PM @ " },

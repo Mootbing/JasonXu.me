@@ -1,0 +1,10 @@
+<svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="emo-drop" x1="6" y1="4" x2="26" y2="29" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#5b8cff" />
+      <stop offset="1" stop-color="#b388ff" />
+    </linearGradient>
+  </defs>
+  <path d="M16 4 C16 4 7 15 7 21 C7 26 11 29 16 29 C21 29 25 26 25 21 C25 15 16 4 16 4 Z" fill="url(#emo-drop)" />
+  <ellipse cx="12.2" cy="20" rx="2" ry="3.2" fill="#fff" opacity="0.45" transform="rotate(-22 12.2 20)" />
+</svg>
