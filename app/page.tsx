@@ -44,22 +44,15 @@ interface NavLink {
 // Content Constants
 const HERO_CONTENT: HeroItem[] = [
   [
-    { text: "Currently building " },
-    {
-      link: {
-        text: "Emocentric",
-        url: "https://www.emo.studio",
-        icon: { src: "/emocentric.svg", alt: "Emocentric" },
-      },
-    },
-    { text: ", Co-founding " },
+    { text: "Co-Founder @ " },
     {
       link: {
         text: "Resonance",
         url: "https://rsnc.ai",
         icon: { src: "/pally.svg", alt: "Pally" },
       },
-    }
+    },
+    { text: ", Building EQ for agents" },
   ],
   [
     { text: "Previously I was..." },
@@ -109,7 +102,7 @@ const HERO_CONTENT: HeroItem[] = [
     { text: " (Prof. Rajapakse)" },
   ],
   [
-    { text: "- Content Strategist @ " },
+    { text: "- UGC @ " },
     {
       link: {
         text: "Blackbox",
