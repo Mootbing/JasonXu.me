@@ -80,6 +80,17 @@ const HERO_CONTENT: HeroItem[] = [
     { text: " ($1B AUM)" },
   ],
   [
+    { text: "- Dropout @ " },
+    {
+      link: {
+        text: "UPenn",
+        url: "https://www.upenn.edu/",
+        icon: { src: "/penn.png", alt: "UPenn", size: 20, dy: 1, grayscale: true },
+      },
+    },
+    { text: " ('28)" },
+  ],
+  [
     { text: "- Head of ML @ " },
     {
       link: {
@@ -89,17 +100,6 @@ const HERO_CONTENT: HeroItem[] = [
       },
     },
     { text: " (Prof. Rajapakse)" },
-  ],
-  [
-    { text: "- CS Sophomore @ " },
-    {
-      link: {
-        text: "UPenn",
-        url: "https://www.upenn.edu/",
-        icon: { src: "/penn.png", alt: "UPenn", size: 20, dy: 1, grayscale: true },
-      },
-    },
-    { text: " (Left FA '25)" },
   ],
   [
     { text: "- GTM Engineer @ " },
