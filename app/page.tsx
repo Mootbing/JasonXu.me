@@ -99,7 +99,7 @@ const HERO_CONTENT: HeroItem[] = [
         icon: { src: "/penn.png", alt: "UPenn", size: 20, dy: 1, grayscale: true },
       },
     },
-    { text: " (0.0 GPA)" },
+    { text: " (Left FA '25)" },
   ],
   [
     { text: "- GTM Engineer @ " },
