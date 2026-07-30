@@ -52,7 +52,7 @@ const HERO_CONTENT: HeroItem[] = [
         icon: { src: "/pally.svg", alt: "Pally" },
       },
     },
-    { text: ", Building EQ for agents" },
+    { text: ", EQ for Agents" },
   ],
   [
     { text: "Previously I was..." },
@@ -80,18 +80,7 @@ const HERO_CONTENT: HeroItem[] = [
     { text: " ($1B AUM)" },
   ],
   [
-    { text: "- Founder in Residence @ " },
-    {
-      link: {
-        text: "Photon",
-        url: "https://photon.codes",
-        icon: { src: "/photon.png", alt: "Photon" },
-      },
-    },
-    { text: " (0.375%)" },
-  ],
-  [
-    { text: "- ML & PL @ " },
+    { text: "- Head of ML @ " },
     {
       link: {
         text: "Penn Medicine",
@@ -102,7 +91,18 @@ const HERO_CONTENT: HeroItem[] = [
     { text: " (Prof. Rajapakse)" },
   ],
   [
-    { text: "- UGC @ " },
+    { text: "- CS Sophomore @ " },
+    {
+      link: {
+        text: "UPenn",
+        url: "https://www.upenn.edu/",
+        icon: { src: "/penn.png", alt: "UPenn", size: 20, dy: 1, grayscale: true },
+      },
+    },
+    { text: " (0.0 GPA)" },
+  ],
+  [
+    { text: "- GTM Engineer @ " },
     {
       link: {
         text: "Blackbox",
@@ -110,10 +110,19 @@ const HERO_CONTENT: HeroItem[] = [
         icon: { src: "/blackbox.png", alt: "Blackbox" },
       },
     },
-    { text: " (2M+ views)" },
+    { text: ", " },
+    {
+      link: {
+        text: "Photon",
+        url: "https://photon.codes",
+        icon: { src: "/photon.png", alt: "Photon" },
+      },
+    },
+    { text: " & UGC" },
+    { text: " (15M+ views ttl.)" },
   ],
   [
-    { text: "- SWE & PM @ " },
+    { text: "- Project Manager @ " },
     {
       link: {
         text: "United Nations",
