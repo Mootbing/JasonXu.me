@@ -122,7 +122,7 @@ const HERO_CONTENT: HeroItem[] = [
     { text: " (15M+ views ttl.)" },
   ],
   [
-    { text: "- Project Manager @ " },
+    { text: "- 🤫 @ " },
     {
       link: {
         text: "United Nations",
