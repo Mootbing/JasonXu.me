@@ -49,7 +49,15 @@ const HERO_CONTENT: HeroItem[] = [
       link: {
         text: "Resonance",
         url: "https://rsnc.ai",
-        icon: { src: "/pally.svg", alt: "Pally" },
+        icon: { src: "/pally.svg", alt: "Resonance" },
+      },
+    },
+    { text: " " },
+    {
+      link: {
+        text: "W27",
+        url: "https://www.ycombinator.com/verify/lddvmsgre675q9gy",
+        icon: { src: "/yc.png", alt: "Y Combinator", size: 16, radius: 2 },
       },
     },
     { text: ", EQ for Agents" },
@@ -101,26 +109,7 @@ const HERO_CONTENT: HeroItem[] = [
     },
     { text: " (Prof. Rajapakse)" },
   ],
-  [
-    { text: "- GTM Engineer @ " },
-    {
-      link: {
-        text: "Blackbox",
-        url: "https://blackbox.ai",
-        icon: { src: "/blackbox.png", alt: "Blackbox" },
-      },
-    },
-    { text: ", " },
-    {
-      link: {
-        text: "Photon",
-        url: "https://photon.codes",
-        icon: { src: "/photon.png", alt: "Photon" },
-      },
-    },
-    { text: " & UGC" },
-    { text: " (15M+ views ttl.)" },
-  ],
+
   [
     { text: "- 🤫 @ " },
     {
