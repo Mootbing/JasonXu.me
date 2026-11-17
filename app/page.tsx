@@ -329,7 +329,7 @@ export default function Home() {
           >
             <button
               type="button"
-              className="nav-link"
+              className="nav-link -mr-2 md:-mr-4"
               aria-haspopup="dialog"
               aria-controls="portfolio-dialog"
               aria-expanded={portfolioOpen}
