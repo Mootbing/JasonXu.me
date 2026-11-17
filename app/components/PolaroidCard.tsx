@@ -100,8 +100,6 @@ function MediaElement({
     );
   }
   return (
-    // Media uses the original image URLs so video and photo previews share one renderer.
-    // eslint-disable-next-line @next/next/no-img-element
     <img
       src={src}
       alt={alt ?? ""}
@@ -116,6 +114,9 @@ function MediaElement({
 
 function PolaroidContent({
   item,
+  year,
+  title,
+  photoIndex,
   sizeClass,
   stackOffset,
   videoRef,
@@ -381,15 +382,6 @@ function SinglePolaroid({
       onPointerDown={(e) => {
         pointerStart.current = { x: e.clientX, y: e.clientY };
       }}
-      role={onTap ? "button" : undefined}
-      tabIndex={onTap ? 0 : undefined}
-      aria-label={onTap ? "Expand " + item.caption : undefined}
-      onKeyDown={onTap ? (event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          onTap();
-        }
-      } : undefined}
       onClick={onTap ? handleClick : undefined}
       initial={false}
       animate={{
@@ -537,16 +529,21 @@ function ExpandedPolaroidOverlay({
   // FLIP delta: where the source card's center sits relative to the viewport center,
   // how much smaller the source is than the target frame, and how much it's rotated
   // visually. Computed once per mount.
-  const [flip] = useState(() => {
-    if (!origin || typeof window === "undefined") return { x: 0, y: 0, scale: 1, rotate: 0 };
-    const targetW = window.innerWidth >= 768 ? TARGET_FRAME_W_DESKTOP : TARGET_FRAME_W_MOBILE;
-    return {
+  const flip = useRef<{ x: number; y: number; scale: number; rotate: number }>({
+    x: 0, y: 0, scale: 1, rotate: 0,
+  });
+  if (origin && typeof window !== "undefined") {
+    const isMd = window.innerWidth >= 768;
+    const targetW = isMd ? TARGET_FRAME_W_DESKTOP : TARGET_FRAME_W_MOBILE;
+    flip.current = {
       x: origin.cx - window.innerWidth / 2,
       y: origin.cy - window.innerHeight / 2,
+      // Multiply by source's cumulative parent scale so the FLIP exit ends at
+      // the polaroid's actual on-screen visual size (not the unscaled offsetWidth).
       scale: (origin.w * origin.scale) / targetW,
       rotate: origin.rotation,
     };
-  });
+  }
 
   const dismissWithTime = useCallback(() => {
     onDismiss(frontVideoRef.current?.currentTime);
@@ -563,11 +560,10 @@ function ExpandedPolaroidOverlay({
   useEffect(() => {
     // html has `scrollbar-gutter: stable` (globals.css) so toggling body
     // overflow does NOT shift layout — no padding-right compensation needed.
-    const oldOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     document.body.classList.add("polaroid-expanded");
     return () => {
-      document.body.style.overflow = oldOverflow;
+      document.body.style.overflow = "";
       document.body.classList.remove("polaroid-expanded");
     };
   }, []);
@@ -651,17 +647,17 @@ function ExpandedPolaroidOverlay({
         <motion.div
           className="pointer-events-auto"
           initial={{
-            x: flip.x,
-            y: flip.y,
-            scale: flip.scale,
-            rotate: flip.rotate,
+            x: flip.current.x,
+            y: flip.current.y,
+            scale: flip.current.scale,
+            rotate: flip.current.rotate,
           }}
           animate={{ x: 0, y: 0, scale: 1, rotate: 0 }}
           exit={{
-            x: flip.x,
-            y: flip.y,
-            scale: flip.scale,
-            rotate: flip.rotate,
+            x: flip.current.x,
+            y: flip.current.y,
+            scale: flip.current.scale,
+            rotate: flip.current.rotate,
           }}
           transition={FLIP_TRANSITION}
         >
@@ -750,16 +746,16 @@ export default function PolaroidStack({
   const [origin, setOrigin] = useState<OriginRect | null>(null);
   const topVideoRef = useRef<HTMLVideoElement>(null);
   const topCardElRef = useRef<HTMLDivElement>(null);
-  const [portalTarget] = useState<HTMLElement | null>(() =>
-    typeof document === "undefined" ? null : document.getElementById("portfolio-dialog") ?? document.body
-  );
+  const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
   // Fit-to-screen scaling. scaleRef wraps the spacer + cards; we measure its
   // natural (pre-transform) width and shrink it if it would overflow.
   const scaleRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
   const [naturalSize, setNaturalSize] = useState<{ w: number; h: number } | null>(null);
 
-
+  useEffect(() => {
+    setPortalTarget(document.body);
+  }, []);
 
   useEffect(() => {
     const inner = scaleRef.current;

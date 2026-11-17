@@ -1,0 +1,1242 @@
+"use client";
+
+import { Fragment, useRef, useState, useEffect, useLayoutEffect, useMemo, useCallback } from "react";
+import { motion } from "framer-motion";
+import PolaroidStack from "./PolaroidCard";
+import type { PolaroidItem } from "./PolaroidCard";
+import PROJECTS_RAW from "../../public/data/Work.json";
+
+// Carousel needs measurements committed before paint. SSR has no window —
+// fall back to useEffect there (it's a no-op since the carousel is gated
+// behind useIsCompact which only resolves on the client).
+const useIsoLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
+
+interface TimelineProject {
+  year: string;
+  title: string;
+  description: string;
+  fullDescription?: string;
+  link?: string;
+  tags: string[];
+  badges?: ({ href: string; src: string; alt: string; width: number; height: number; style?: string } | { text: string })[];
+  badgesMt?: number;
+  polaroids?: PolaroidItem[];
+}
+
+const PROJECTS = PROJECTS_RAW as TimelineProject[];
+
+// vh of vertical scroll required per project transition
+const SLIDE_VH = 90;
+const TITLE_REVEAL_START = 0.52;
+const TITLE_REVEAL_END = 0.07;
+
+// At full carousel scroll, the last polaroid drifts this many viewport-widths
+// past its landing position (toward viewport-left). Picked to land its center
+// at viewport X = 30vw (30% from left / 70% from right). The carousel section
+// is lengthened by END_OVERSHOOT * SLIDE_VH so the trailing scroll feels natural
+// rather than abrupt.
+const END_OVERSHOOT = 0.07;
+const LANDING_OFFSET_VW = 13;
+const POLAROID_SCALE_MIN = 0.6;
+const POLAROID_SCALE_MAX = 1.5;
+const POLAROID_SWIVEL_MAX = 42;
+
+function clamp(v: number, lo: number, hi: number) {
+  return v < lo ? lo : v > hi ? hi : v;
+}
+
+const MONTH_MAP: Record<string, string> = {
+  Jan: "January", Feb: "February", Mar: "March", Apr: "April",
+  May: "May", Jun: "June", Jul: "July", Aug: "August",
+  Sep: "September", Oct: "October", Nov: "November", Dec: "December",
+};
+
+function expandYear(year: string): string {
+  const parts = year.split(" ");
+  if (parts.length === 2 && MONTH_MAP[parts[0]]) {
+    return `${MONTH_MAP[parts[0]]} ${parts[1]}`;
+  }
+  return year;
+}
+
+// Rough hand-drawn-looking highlighter mark. Inline SVG background with a
+// slightly wobbly Bezier outline so the edges look marker-drawn rather than
+// a clean rectangle. `box-decoration-break: clone` so it survives line wraps.
+function Highlight({ children }: { children: React.ReactNode }) {
+  const svg = encodeURIComponent(
+    `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 30' preserveAspectRatio='none'><path d='M 3 7 C 60 3 120 8 160 5 S 197 7 198 9 L 196 24 C 140 28 90 23 50 26 S 4 25 3 23 Z' fill='rgb(253,224,71)' opacity='0.55'/></svg>`
+  );
+  return (
+    <span
+      style={{
+        backgroundImage: `url("data:image/svg+xml;utf8,${svg}")`,
+        backgroundRepeat: "no-repeat",
+        backgroundSize: "100% 92%",
+        backgroundPosition: "0 60%",
+        padding: "0 0.08em",
+        boxDecorationBreak: "clone",
+        WebkitBoxDecorationBreak: "clone",
+      } as React.CSSProperties}
+    >
+      {children}
+    </span>
+  );
+}
+
+// Parse `==text==` markers into <Highlight> wraps; leave the rest as text.
+function parseHighlights(text: string): React.ReactNode[] {
+  const parts: React.ReactNode[] = [];
+  const regex = /==(.+?)==/g;
+  let lastIndex = 0;
+  let match;
+  let key = 0;
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(text.slice(lastIndex, match.index));
+    }
+    parts.push(<Highlight key={key++}>{match[1]}</Highlight>);
+    lastIndex = regex.lastIndex;
+  }
+  if (lastIndex < text.length) {
+    parts.push(text.slice(lastIndex));
+  }
+  return parts;
+}
+
+// Same as parseHighlights but returns typed runs so AnimatedReveal can slice
+// by visible char count and wrap highlighted runs in <Highlight>.
+type TextRun = { type: "plain" | "highlight"; text: string };
+function parseTextRuns(text: string): TextRun[] {
+  const runs: TextRun[] = [];
+  const regex = /==(.+?)==/g;
+  let lastIndex = 0;
+  let match;
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      runs.push({ type: "plain", text: text.slice(lastIndex, match.index) });
+    }
+    runs.push({ type: "highlight", text: match[1] });
+    lastIndex = regex.lastIndex;
+  }
+  if (lastIndex < text.length) {
+    runs.push({ type: "plain", text: text.slice(lastIndex) });
+  }
+  return runs;
+}
+
+// Length excluding the `==` markers — what the user actually sees and what the
+// typewriter should ramp through.
+function visibleLength(text: string): number {
+  return text.replace(/==/g, "").length;
+}
+
+const CHAR_DURATION_MS = 110;
+const STAGGER_MS_MAX = 4;
+const REVEAL_TOTAL_MAX_MS = 420;
+const BUTTON_FADE_MS = 110;
+const HEIGHT_SMOOTH_MS = 280;
+const HIGHLIGHT_FILL_MS = 420;
+const HIGHLIGHT_STAGGER_MS = 240;
+const HIGHLIGHT_DRAIN_MS = 200;
+
+// Highlight wrapper that slides its background image in from left to right
+// after the text inside has finished its typewriter, and drains the same way
+// (left edge disappears first). Animates background-size's width; the bg's
+// anchor point snaps between left (during fill, so the bg grows rightward
+// from x=0) and right (during drain, so the bg shrinks rightward from x=0,
+// leaving the right edge intact). Only affects the painted background —
+// chars stay fully visible the whole time.
+function AnimatedHighlight({
+  children,
+  active,
+  fillDelay = 0,
+}: {
+  children: React.ReactNode;
+  active: boolean;
+  fillDelay?: number;
+}) {
+  const svg = encodeURIComponent(
+    `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 30' preserveAspectRatio='none'><path d='M 3 7 C 60 3 120 8 160 5 S 197 7 198 9 L 196 24 C 140 28 90 23 50 26 S 4 25 3 23 Z' fill='rgb(253,224,71)' opacity='0.55'/></svg>`
+  );
+  return (
+    <motion.span
+      initial={false}
+      animate={{
+        backgroundSize: active ? "100% 92%" : "0% 92%",
+        backgroundPosition: active ? "0% 60%" : "100% 60%",
+      }}
+      transition={{
+        backgroundSize: {
+          duration: HIGHLIGHT_FILL_MS / 1000,
+          ease: "easeOut",
+          delay: active ? fillDelay : 0,
+        },
+        // Snap the anchor instantly when direction flips. The size at the
+        // snap moment matches (100% in either orientation = full width at
+        // the same pixels), so there's no visible jump.
+        backgroundPosition: { duration: 0 },
+      }}
+      style={{
+        backgroundImage: `url("data:image/svg+xml;utf8,${svg}")`,
+        backgroundRepeat: "no-repeat",
+        padding: "0 0.08em",
+        boxDecorationBreak: "clone",
+        WebkitBoxDecorationBreak: "clone",
+      } as React.CSSProperties}
+    >
+      {children}
+    </motion.span>
+  );
+}
+
+// Outer wrapper animates its own height to whatever the inner content's natural
+// height resolves to (tracked via ResizeObserver). Discrete reflow jumps — like
+// a typewritten char wrapping onto a new line, or all chars unmounting at the
+// end of a collapse — become smooth eased transitions instead of snaps.
+// overflow: hidden so the inner content can never paint outside the animated
+// box (avoids text briefly overlapping siblings below during catch-up).
+function HeightSmoother({ children }: { children: React.ReactNode }) {
+  const innerRef = useRef<HTMLDivElement>(null);
+  const [height, setHeight] = useState<number | "auto">("auto");
+
+  useIsoLayoutEffect(() => {
+    const el = innerRef.current;
+    if (!el) return;
+    setHeight(el.offsetHeight);
+    const ro = new ResizeObserver(() => {
+      if (innerRef.current) setHeight(innerRef.current.offsetHeight);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  return (
+    <motion.div
+      animate={{ height }}
+      transition={{ duration: HEIGHT_SMOOTH_MS / 1000, ease: [0.32, 0.72, 0, 1] }}
+      style={{
+        // Vertical-only clip: the inner content can't paint past the animated
+        // height (avoids text bleeding into siblings during catch-up), but
+        // horizontally we extend the clip region far beyond the box so the
+        // [more]/[less] button at the right edge of a tight line never gets
+        // its trailing pixel clipped. `overflow: hidden` clips both axes;
+        // mixing overflow-x/y forces auto and adds scrollbars; this is the
+        // clean middle ground.
+        clipPath:
+          "polygon(-1000px 0, calc(100% + 1000px) 0, calc(100% + 1000px) 100%, -1000px 100%)",
+      }}
+    >
+      <div ref={innerRef}>{children}</div>
+    </motion.div>
+  );
+}
+
+// Typewriter on expand: chars mount one at a time at staggerMs intervals so
+// the inline flow grows organically (no FLIP scale artifacts). On collapse:
+// all currently-mounted chars fade out together (opacity + blur), then unmount
+// in a single batch — faster and cleaner than the reverse typewriter, and the
+// layout snap at the end happens behind a curtain of already-faded text.
+function AnimatedReveal({
+  text,
+  show,
+  staggerMs,
+  onEraseComplete,
+}: {
+  text: string;
+  show: boolean;
+  staggerMs: number;
+  onEraseComplete?: () => void;
+}) {
+  const runs = useMemo(() => parseTextRuns(text), [text]);
+  const total = useMemo(
+    () => runs.reduce((acc, r) => acc + r.text.length, 0),
+    [runs]
+  );
+  // Stable highlight indices (in source order, left-to-right) for stagger.
+  const highlightIndexFor = useMemo(() => {
+    const out: number[] = [];
+    let hi = 0;
+    for (const r of runs) out.push(r.type === "highlight" ? hi++ : -1);
+    return out;
+  }, [runs]);
+
+  const [count, setCount] = useState(show ? total : 0);
+  // eraser mode = per-char staggered fade-out on collapse (left-to-right).
+  const [eraserMode, setEraserMode] = useState(false);
+  // highlights paint AFTER text is settled — true once all chars are mounted
+  // (or initially if we mounted already-full, like a delete shown on page load).
+  const [highlightsActive, setHighlightsActive] = useState(show);
+
+  const countRef = useRef(count);
+  countRef.current = count;
+
+  // Skip motion.span's initial fade for chars present at first render — page
+  // load shouldn't animate the initially-shown text.
+  const hasRenderedRef = useRef(false);
+  const isFirstRender = !hasRenderedRef.current;
+  useEffect(() => {
+    hasRenderedRef.current = true;
+  });
+
+  useEffect(() => {
+    if (show) {
+      setEraserMode(false);
+      if (countRef.current >= total) {
+        // Already full; just make sure highlights are on.
+        setHighlightsActive(true);
+        return;
+      }
+      const id = window.setInterval(() => {
+        const next = countRef.current + 1;
+        countRef.current = next;
+        setCount(next);
+        if (next >= total) {
+          window.clearInterval(id);
+          // Wait for the last char to finish its deblur, then trigger
+          // highlights so they paint over a fully-settled line of text.
+          window.setTimeout(() => setHighlightsActive(true), CHAR_DURATION_MS);
+        }
+      }, staggerMs);
+      return () => window.clearInterval(id);
+    }
+    // Collapse: highlights off first, chars run the per-char staggered eraser.
+    setHighlightsActive(false);
+    if (countRef.current === 0) {
+      onEraseComplete?.();
+      return;
+    }
+    setEraserMode(true);
+    const eraserTotalMs = total * staggerMs + CHAR_DURATION_MS;
+    const timer = window.setTimeout(() => {
+      countRef.current = 0;
+      setCount(0);
+      setEraserMode(false);
+      onEraseComplete?.();
+    }, eraserTotalMs);
+    return () => window.clearTimeout(timer);
+  }, [show, total, staggerMs, onEraseComplete]);
+
+  let globalCharIdx = 0;
+  let offset = 0;
+  return (
+    <>
+      {runs.map((run, ri) => {
+        const runLen = run.text.length;
+        const visibleInRun = Math.min(runLen, Math.max(0, count - offset));
+        offset += runLen;
+        if (visibleInRun === 0) return null;
+        const chars = Array.from(run.text).slice(0, visibleInRun);
+        const startCharIdx = globalCharIdx;
+        globalCharIdx += chars.length;
+        const renderedChars = chars.map((ch, ci) => {
+          const idx = startCharIdx + ci;
+          return (
+            <motion.span
+              key={ci}
+              initial={
+                isFirstRender ? false : { opacity: 0, filter: "blur(6px)" }
+              }
+              animate={
+                eraserMode
+                  ? { opacity: 0, filter: "blur(6px)" }
+                  : { opacity: 1, filter: "blur(0px)" }
+              }
+              transition={{
+                duration: CHAR_DURATION_MS / 1000,
+                ease: "easeOut",
+                // Per-char delay on eraser → left-to-right wipe.
+                delay: eraserMode ? (idx * staggerMs) / 1000 : 0,
+              }}
+            >
+              {ch}
+            </motion.span>
+          );
+        });
+        if (run.type === "highlight") {
+          const hlDelay = (highlightIndexFor[ri] * HIGHLIGHT_STAGGER_MS) / 1000;
+          return (
+            <AnimatedHighlight
+              key={ri}
+              active={highlightsActive}
+              fillDelay={hlDelay}
+            >
+              {renderedChars}
+            </AnimatedHighlight>
+          );
+        }
+        return <Fragment key={ri}>{renderedChars}</Fragment>;
+      })}
+    </>
+  );
+}
+
+const SHORT_FADE_MS = 320;
+
+function DescriptionWithMore({ short, full }: { short: string; full?: string }) {
+  const [open, setOpen] = useState(false);
+  const [textOpen, setTextOpen] = useState(false);
+  // True while the full text is still rendered in flow during a collapse —
+  // used to keep the short overlay positioned absolutely (so it doesn't
+  // displace the still-erasing full text). Flips back off the moment full
+  // unmounts its chars, at which point short flips to static (in flow) so it
+  // becomes the new height baseline.
+  const [fullErasing, setFullErasing] = useState(false);
+
+  const trimmedShort = short.trim();
+  const trimmedFull = full?.trim() ?? "";
+  const hasMore = trimmedFull.length > 0 && trimmedFull !== trimmedShort;
+
+  const startsWithShort = hasMore && trimmedFull.startsWith(trimmedShort);
+  const animatedText = startsWithShort
+    ? " " + trimmedFull.slice(trimmedShort.length).trimStart()
+    : trimmedFull;
+
+  const animatedLen = visibleLength(animatedText);
+  const staggerMs = useMemo(() => {
+    const len = Math.max(1, animatedLen);
+    return Math.min(
+      STAGGER_MS_MAX,
+      Math.max(2, (REVEAL_TOTAL_MAX_MS - CHAR_DURATION_MS) / len)
+    );
+  }, [animatedLen]);
+
+  // After a short fade lag, flip textOpen AND set fullErasing in the same
+  // tick so the next render has both consistent values. (Splitting them across
+  // effects caused a one-frame stutter: textOpen would flip but fullErasing
+  // wouldn't, so shortIsAbsolute briefly went false and the short flashed into
+  // the inline flow before snapping back to absolute.) fullErasing only goes
+  // true when we're actually collapsing FROM an expanded state.
+  const prevOpenRef = useRef(open);
+  useEffect(() => {
+    if (!hasMore) return;
+    const wasOpen = prevOpenRef.current;
+    prevOpenRef.current = open;
+    const t = setTimeout(() => {
+      setTextOpen(open);
+      if (!open && wasOpen) setFullErasing(true);
+      if (open) setFullErasing(false);
+    }, BUTTON_FADE_MS);
+    return () => clearTimeout(t);
+  }, [open, hasMore]);
+
+  const handleEraseComplete = useCallback(() => {
+    setFullErasing(false);
+  }, []);
+
+  // Keep the expand label together, separated from the description by a space.
+  const moreCue = <> <span style={{ whiteSpace: "nowrap" }}>[...]</span></>;
+
+  if (!hasMore) {
+    return <>{parseHighlights(short)}</>;
+  }
+
+  if (startsWithShort) {
+    return (
+      <>
+        <span
+          onClick={(e) => {
+            e.stopPropagation();
+            setOpen(true);
+          }}
+          style={{ cursor: open ? "default" : "pointer" }}
+        >
+          {parseHighlights(short)}
+          {!open && moreCue}
+        </span>
+        <span
+          onClick={(e) => {
+            if (!open) return;
+            e.stopPropagation();
+            setOpen(false);
+          }}
+          style={{ cursor: open ? "pointer" : "default" }}
+        >
+          <AnimatedReveal
+            text={animatedText}
+            show={textOpen}
+            staggerMs={staggerMs}
+          />
+        </span>
+      </>
+    );
+  }
+
+  // Wholesale: short overlays the full text (above, doesn't displace) while
+  // full is being erased; once full unmounts, short flips into normal flow so
+  // it owns the container height. On expand, short moves to absolute the
+  // moment textOpen flips so it fades out without holding flow space.
+  // Clicking the short expands; clicking the full collapses.
+  const shortIsAbsolute = textOpen || fullErasing;
+  return (
+    <>
+      <motion.span
+        onClick={(e) => {
+          e.stopPropagation();
+          setOpen(true);
+        }}
+        style={
+          shortIsAbsolute
+            ? {
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                zIndex: 2,
+                pointerEvents: "none",
+              }
+            : { cursor: "pointer" }
+        }
+        initial={false}
+        animate={{
+          opacity: textOpen ? 0 : 1,
+          filter: textOpen ? "blur(6px)" : "blur(0px)",
+        }}
+        transition={{ duration: SHORT_FADE_MS / 1000, ease: "easeOut" }}
+      >
+        {parseHighlights(short)}
+        {moreCue}
+      </motion.span>
+      <span
+        onClick={(e) => {
+          if (!textOpen) return;
+          e.stopPropagation();
+          setOpen(false);
+        }}
+        style={{ cursor: textOpen ? "pointer" : "default" }}
+      >
+        <AnimatedReveal
+          text={animatedText}
+          show={textOpen}
+          staggerMs={staggerMs}
+          onEraseComplete={handleEraseComplete}
+        />
+      </span>
+    </>
+  );
+}
+
+// Linear progress — uniform horizontal velocity across the whole carousel. The
+// previous per-segment smoothstep concentrated the slow-feel at each landing
+// midpoint; now the slowness is spread evenly so polaroids drift in from the
+// right at the same gentle rate they exit on the left.
+function easeP(p: number, _N: number): number {
+  return p;
+}
+
+function ExternalLinkIcon() {
+  return (
+    <svg
+      width="9"
+      height="9"
+      viewBox="0 0 12 12"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="inline-block ml-3"
+      style={{ verticalAlign: "middle", marginBottom: "2px", color: "#333333" }}
+    >
+      <path d="M4.5 1.5H2a.5.5 0 00-.5.5v8a.5.5 0 00.5.5h8a.5.5 0 00.5-.5V7.5" />
+      <path d="M7 1.5h3.5V5" />
+      <path d="M5 7L10.5 1.5" />
+    </svg>
+  );
+}
+
+function useIsCompact(breakpoint = 800) {
+  const [compact, setCompact] = useState<boolean | null>(null);
+  useEffect(() => {
+    const mql = window.matchMedia(`(max-width: ${breakpoint - 1}px)`);
+    setCompact(mql.matches);
+    const handler = (e: MediaQueryListEvent) => setCompact(e.matches);
+    mql.addEventListener("change", handler);
+    return () => mql.removeEventListener("change", handler);
+  }, [breakpoint]);
+  return compact;
+}
+
+// Parses an inline CSS string from Work.json into a React style object. Splits
+// on `;` or `,` (commas at top level only — commas inside parens like
+// `translate(10px, 20px)` are preserved). Each `prop: value` pair has its
+// kebab-case key converted to camelCase. Tolerant of both separators because
+// authors mostly write JSON-y commas; CSS-y semicolons work too.
+function parseBadgeStyle(s: string): React.CSSProperties {
+  const parts: string[] = [];
+  let current = "";
+  let depth = 0;
+  for (const ch of s) {
+    if (ch === "(") depth++;
+    else if (ch === ")") depth = Math.max(0, depth - 1);
+    if (depth === 0 && (ch === ";" || ch === ",")) {
+      if (current.trim()) parts.push(current);
+      current = "";
+    } else {
+      current += ch;
+    }
+  }
+  if (current.trim()) parts.push(current);
+
+  const out: Record<string, string> = {};
+  for (const part of parts) {
+    const idx = part.indexOf(":");
+    if (idx < 0) continue;
+    const rawKey = part.slice(0, idx).trim();
+    const value = part.slice(idx + 1).trim();
+    if (!rawKey || !value) continue;
+    const key = rawKey.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
+    out[key] = value;
+  }
+  return out as React.CSSProperties;
+}
+
+function Badges({
+  project,
+  align,
+  marginTop,
+}: {
+  project: TimelineProject;
+  align: "left" | "right" | "center";
+  marginTop?: number | string;
+}) {
+  if (!project.badges?.length) return null;
+  const justify =
+    align === "right" ? "justify-end" : align === "center" ? "justify-center" : "justify-start";
+  return (
+    <div
+      className={`flex flex-wrap items-center gap-3 ${justify}`}
+      style={{ marginTop: marginTop ?? project.badgesMt ?? 8 }}
+    >
+      {project.badges.map((badge, i) =>
+        "text" in badge ? (
+          <span
+            key={i}
+            style={{
+              fontFamily: "var(--font-caveat), cursive",
+              fontWeight: 400,
+              color: "#999999",
+              fontSize: "0.95rem",
+              whiteSpace: "nowrap",
+              marginRight: -8,
+              alignSelf: "center",
+            }}
+          >
+            {badge.text}
+          </span>
+        ) : (
+          <a
+            key={i}
+            href={badge.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={badge.style ? parseBadgeStyle(badge.style) : undefined}
+          >
+            <img
+              src={badge.src}
+              alt={badge.alt}
+              width={badge.width}
+              height={badge.height}
+              loading="lazy"
+              decoding="async"
+              className="border-0 outline-0"
+            />
+          </a>
+        )
+      )}
+    </div>
+  );
+}
+
+// Per-character "handwritten in" animation. Each letter pops in with its own
+// scale + tiny rotation so it feels like ink being laid down stroke-by-stroke
+// instead of a left-to-right curtain pull. Tilts are deterministic by index
+// (no Math.random → no SSR mismatch).
+function HandwrittenText({ text, progress }: { text: string; progress: number }) {
+  const chars = Array.from(text);
+  const N = chars.length;
+  // Each char's fade-in window is STAGGER * (1/N) of overall progress. >1 makes
+  // adjacent chars overlap slightly (more natural writing flow than strict
+  // sequential typing).
+  const STAGGER = 1.5;
+  // Speed is controlled externally — `progress` is already gated to ramp up
+  // only after the polaroid lands at center, so use it directly.
+  const wholeBlur = (1 - progress) * 10;
+  return (
+    <span
+      style={{
+        display: "inline-block",
+        filter: wholeBlur > 0.05 ? `blur(${wholeBlur.toFixed(2)}px)` : undefined,
+      }}
+    >
+      {chars.map((ch, i) => {
+        const startAt = i / N;
+        const windowSize = STAGGER / N;
+        const local = clamp((progress - startAt) / windowSize, 0, 1);
+        // Cubic ease-out: ink lays down quickly then settles.
+        const eased = 1 - Math.pow(1 - local, 3);
+        // Pseudo-random per-character tilt that resolves to 0 — gives the
+        // freshly-written letters a hand-drawn wobble before settling.
+        const seed = ((i * 9301 + 49297) % 233280) / 233280;
+        const tilt = (seed - 0.5) * 14 * (1 - eased);
+        const yLift = (1 - eased) * 6;
+        return (
+          <span
+            key={i}
+            style={{
+              display: "inline-block",
+              opacity: eased,
+              transform: `translateY(${yLift}px) scale(${0.5 + 0.5 * eased}) rotate(${tilt}deg)`,
+              transformOrigin: "left bottom",
+              whiteSpace: "pre",
+            }}
+          >
+            {ch === " " ? " " : ch}
+          </span>
+        );
+      })}
+    </span>
+  );
+}
+
+function ProjectSlide({
+  project,
+  index,
+  total,
+  progress,
+  entryT,
+}: {
+  project: TimelineProject;
+  index: number;
+  total: number;
+  progress: number;
+  entryT: number;
+}) {
+  // Effective dist: how many viewport-widths this project's polaroid is from
+  // viewport center. Positive = polaroid right of center (approaching), 0 =
+  // centered, negative = past center moving left.
+  // For project 0 during entry, `entryT` keeps dist > 0 even though progress = 0.
+  const distEff = (index - progress * (total - 1 + END_OVERSHOOT)) + entryT;
+
+  // Clip keyframes tied to the polaroid actually crossing the text region.
+  // Text anchor changed: now left: 50% (text left edge at viewport center),
+  // so text occupies ~50vw → ~50+W vw (W ≈ 30vw for typical entries; capped
+  // at 40vw). Polaroid is ~24vw wide; landing center at 37vw → polaroid_right
+  // at 49vw + distEff*100vw. Compared to the old right: 25% anchor (text
+  // centered at 75vw), text shifted ~10vw left for typical widths, so the
+  // reveal/hide windows shift by ~-0.10 in distEff units.
+  //   reveal: polaroid_right meets text_right_edge → starts ~0.52
+  //           polaroid_right past text_left (50vw)  → completes ~0.07
+  //   hide:   next polaroid mirrors symmetrically  → starts ~-0.48, ends ~-0.93
+  const CLIP_STOPS: [number, number, number][] = [
+    [ 1.00,   100,    0 ],
+    [ TITLE_REVEAL_START, 100, 0 ],
+    [ TITLE_REVEAL_END,     0, 0 ],
+    [-0.48,     0,    0 ],
+    [-0.93,     0,  100 ],
+    [-2.00,     0,  100 ],
+  ];
+
+  let leftClip = CLIP_STOPS[CLIP_STOPS.length - 1][1];
+  let rightClip = CLIP_STOPS[CLIP_STOPS.length - 1][2];
+  // Stops are in descending order of distEff; find the segment we're in.
+  for (let i = 0; i < CLIP_STOPS.length - 1; i++) {
+    const [t1, l1, r1] = CLIP_STOPS[i];
+    const [t2, l2, r2] = CLIP_STOPS[i + 1];
+    if (distEff <= t1 && distEff >= t2) {
+      const f = (t1 - distEff) / (t1 - t2);
+      leftClip = l1 + (l2 - l1) * f;
+      rightClip = r1 + (r2 - r1) * f;
+      break;
+    }
+  }
+
+  if (leftClip >= 100 || rightClip >= 100) return null;
+
+  const clipPath = `inset(0 ${rightClip}% 0 ${leftClip}%)`;
+
+  return (
+    <div
+      style={{
+        position: "absolute",
+        top: "50%",
+        left: "50%",
+        transform: "translateY(-50%)",
+        // fit-content sizes the container to the actual text bounds so the
+        // clip-path percentages map directly to text width (not a giant box).
+        width: "fit-content",
+        maxWidth: "min(560px, 40vw)",
+        textAlign: "left",
+        pointerEvents: "auto",
+        clipPath,
+        WebkitClipPath: clipPath,
+      }}
+    >
+      {project.year && (
+        <span
+          className="block"
+          style={{
+            fontFamily: "var(--font-caveat), cursive",
+            fontWeight: 400,
+            color: "#999999",
+            fontSize: "1.15rem",
+            letterSpacing: "0.02em",
+            marginBottom: "0.25rem",
+          }}
+        >
+          {expandYear(project.year)}
+        </span>
+      )}
+      <h3
+        className="text-3xl md:text-5xl leading-none"
+        style={{
+          fontFamily: "var(--font-playfair), serif",
+          fontWeight: 300,
+          color: "#222222",
+          marginBottom: "0.75rem",
+        }}
+      >
+        {project.link ? (
+          <a
+            href={project.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-link"
+            style={{ color: "inherit", textDecoration: "none" }}
+          >
+            {project.title}
+            <ExternalLinkIcon />
+          </a>
+        ) : (
+          project.title
+        )}
+      </h3>
+      <HeightSmoother>
+        <p
+          className="description-blob"
+          style={{
+            fontFamily: "var(--font-caveat), cursive",
+            fontWeight: 400,
+            color: "#444444",
+            fontSize: "1.25rem",
+            lineHeight: 1.4,
+            position: "relative",
+          }}
+        >
+          <DescriptionWithMore short={project.description} full={project.fullDescription} />
+        </p>
+      </HeightSmoother>
+      <Badges project={project} align="left" marginTop="0.75rem" />
+    </div>
+  );
+}
+
+function Carousel() {
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const fixedRef = useRef<HTMLDivElement>(null);
+  const polaroidsRef = useRef<HTMLDivElement>(null);
+  const polaroidItemRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const [progress, setProgress] = useState(0);
+  // Default to 1 (polaroid 0 off-screen right) so initial render before any
+  // scroll handler runs has all project text fully clipped — prevents a flash
+  // of project 0's text on page load.
+  const [entryProgress, setEntryProgress] = useState(1);
+  const N = PROJECTS.length;
+  // TRAVEL is the polaroid row's total horizontal traversal in viewport-widths.
+  // Extending by END_OVERSHOOT past (N-1) makes the final polaroid drift past
+  // its landing so it ends at 30% from viewport-left.
+  const TRAVEL = N - 1 + END_OVERSHOOT;
+  const sectionHeight = `${100 + TRAVEL * SLIDE_VH}vh`;
+
+  // The pinned content is a real `position: fixed` element — browser anchors it
+  // to the viewport natively (zero JS lag, no scroll jitter). The empty section
+  // just creates the scroll length, and the JS scroll handler drives:
+  //  - opacity of the fixed pin (fade in/out as the section enters/exits)
+  //  - the polaroid row's horizontal translate
+  //  - per-polaroid spin/arc transforms
+  //  - the React `progress` state that drives the text overlays
+  //
+  // useLayoutEffect (not useEffect) so the FIRST update() runs synchronously
+  // before paint. Critical on the mobile→desktop breakpoint crossover: the
+  // Carousel just mounted, its initial state has polaroid 0 off-screen-right
+  // and all text clipped, but the user may be scrolled mid-carousel. Without
+  // a pre-paint measurement, the browser paints that stale state for one frame
+  // before the post-paint useEffect fixes it — flashing the polaroids and text
+  // out of sync.
+  useIsoLayoutEffect(() => {
+    let raf = 0;
+    let lastProgress = -1;
+    let lastEntryT = -1;
+    let lastOpacity = -1;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+    const update = () => {
+      const section = sectionRef.current;
+      const fixed = fixedRef.current;
+      if (!section || !fixed) return;
+
+      const rect = section.getBoundingClientRect();
+      const winH = window.innerHeight;
+      const sectionScroll = rect.height - winH;
+
+      // Pin is always 100% opacity, always pointer-events: none. Interactive
+      // children (polaroid cards via default `auto`, text fragments via
+      // explicit `pointerEvents: auto`) still receive events; the pin itself
+      // doesn't intercept clicks on empty viewport areas — so hero links and
+      // anything underneath stay clickable.
+      if (lastOpacity !== 1) {
+        lastOpacity = 1;
+        fixed.style.opacity = "1";
+      }
+
+      // Progress through the carousel, 0 → 1. Clamped so during fade in/out the
+      // polaroids park at start/end positions instead of overshooting.
+      const pRaw = sectionScroll > 0 ? clamp(-rect.top / sectionScroll, 0, 1) : 0;
+      // Per-segment smoothstep so the polaroid decelerates into each landing.
+      const p = easeP(pRaw, N);
+      // Entry slide: polaroid 0 slides in horizontally from off-screen right
+      // (just like the other polaroids do during carousel scroll).
+      // On narrow desktops, start farther right so the enlarged, rotated stack
+      // clears the hero. The diagonal covers any rotation; 32px covers the
+      // rear cards and shadow. This extra travel ends at the same landing.
+      const firstPolaroid = polaroidItemRefs.current[0];
+      const entryRadius = firstPolaroid
+        ? (Math.hypot(firstPolaroid.offsetWidth, firstPolaroid.offsetHeight) / 2 + 32) * POLAROID_SCALE_MAX
+        : 0;
+      const entryStart = Math.max(1, 0.5 + LANDING_OFFSET_VW / 100 + entryRadius / window.innerWidth);
+      const entryT = clamp(rect.top / Math.max(winH, 1), 0, 1) * entryStart;
+      const entryX = entryT * window.innerWidth;
+      const polaroids = polaroidsRef.current;
+      // Mirror of text positioning: text uses `right: 25% + translate(50%)`
+      // to put its CENTER at 25% from the right. For polaroid: shift the row
+      // by (25vw + half polaroid width ≈ 12vw) so the polaroid's LEFT edge
+      // sits at 25% from viewport left, leaving its visual center further
+      // right (analogous to the text container extending past its anchor).
+      // Slot center = (- LANDING_OFFSET) + 50vw. For polaroid_left_edge = 25vw
+      // → polaroid_center = 25 + 12 = 37vw → LANDING_OFFSET = 50 - 37 = 13vw.
+      if (polaroids) {
+        polaroids.style.transform = `translate3d(calc(${-p * TRAVEL * 100}vw + ${entryX}px - ${LANDING_OFFSET_VW}vw), -50%, 0)`;
+      }
+
+      // Per-polaroid spin + arc. Effective dist includes entryT so polaroid 0
+      // looks like it's approaching center from one viewport-width to the right
+      // during the entry phase — same spin/arc/scale behavior as any other
+      // polaroid sliding into center.
+      // Once a polaroid's center crosses viewport X = 30vw (30% from left /
+      // 70% from right) — i.e. dist < -0.07 — drag it back with a local X
+      // offset so its visible leftward velocity drops to 40% of normal (60%
+      // slowdown). Rotation also slows but keeps a visible spin. The polaroid lingers
+      // longer in the left half of the viewport before exiting.
+      const LATE_X_THRESHOLD = -0.07;
+      const LATE_X_SLOWDOWN = 0.6; // fraction by which X velocity is reduced
+      const LATE_ROTATION_SPEED = 0.6; // retain 60% of the incoming spin speed
+      for (let i = 0; i < N; i++) {
+        const el = polaroidItemRefs.current[i];
+        if (!el) continue;
+        const dist = (i - p * TRAVEL) + entryT;
+        const absD = Math.abs(dist);
+        // Spline arc: lifts up on the way in/out, exactly 0 at the centerline.
+        const arcY = absD < 1 ? -absD * (1 - absD) * 180 : 0;
+        // Counter-translate: 0 until threshold, then grows linearly with how
+        // far past the threshold the polaroid has traveled. At dist=-0.07: 0vw.
+        // At dist=-1: ~55.8vw (right-ward pull, lagging behind the row).
+        const offsetVw =
+          dist < LATE_X_THRESHOLD
+            ? (LATE_X_THRESHOLD - dist) * 100 * LATE_X_SLOWDOWN
+            : 0;
+        // Perspective follows the card's actual horizontal position, including
+        // its slower exit: large on the right, steadily smaller toward the left.
+        // At the reading position (37vw), it stays close to its natural size.
+        const landingX = 0.5 - LANDING_OFFSET_VW / 100;
+        const travelDist = dist + offsetVw / 100;
+        const viewportX = landingX + travelDist;
+        // Keep spinning throughout the slow exit. Anchor at the slowdown point
+        // so the angle stays continuous, with the original -90 degree offset.
+        const spinDist = dist < LATE_X_THRESHOLD
+          ? LATE_X_THRESHOLD + (dist - LATE_X_THRESHOLD) * LATE_ROTATION_SPEED
+          : dist;
+        const rot = -spinDist * 216 - 90;
+        const scale = POLAROID_SCALE_MIN + (POLAROID_SCALE_MAX - POLAROID_SCALE_MIN) * clamp(viewportX, 0, 1);
+        // Stay front-on from the center to 25vw. Only then ease into the
+        // left-side swivel, with zero angular velocity at its start and end.
+        const leftSwivel = clamp((0.25 - viewportX) / 0.25, 0, 1);
+        const rightSwivel = clamp((viewportX - 0.5) * 2, 0, 1);
+        const swivel = reducedMotion.matches ? 0
+          : (leftSwivel * leftSwivel * (3 - 2 * leftSwivel) - rightSwivel) * POLAROID_SWIVEL_MAX;
+        // Rear cards enter aligned beneath the front, then fan out clockwise
+        // as the stack crosses the viewport. Scrubbing back tucks them in again.
+        const stackFan = clamp((0.85 - viewportX) / 0.7, 0, 1) ** 2;
+        el.style.setProperty("--stack-fan", String(stackFan));
+        el.style.transform = `translate3d(calc(${offsetVw}vw), ${arcY}px, 0) perspective(700px) rotateY(${swivel}deg) rotate(${rot}deg) scale(${scale})`;
+      }
+
+      if (p !== lastProgress) {
+        lastProgress = p;
+        setProgress(p);
+      }
+      // entryT also needs its own track — during approach phase p stays clamped
+      // at 0 while entryT swings from 1 → 0, so we'd otherwise miss those updates
+      // and stale state would keep project 0's text visible at the top.
+      if (entryT !== lastEntryT) {
+        lastEntryT = entryT;
+        setEntryProgress(entryT);
+      }
+    };
+
+    const onScroll = () => {
+      if (raf) cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(update);
+    };
+
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    // Resize must run update() synchronously, NOT through the RAF debounce.
+    // The polaroid row's inline transform mixes vw (auto-reflows) with px
+    // (entryX, frozen until update() runs); per-polaroid offsetVw is also
+    // frozen in the inline string. If we let the browser paint between the
+    // resize and the next RAF, the px parts are stale relative to the
+    // freshly-reflowed vw parts → polaroid and text clip drift out of sync
+    // for a frame. Resize is infrequent enough that a sync update is fine.
+    window.addEventListener("resize", update);
+    reducedMotion.addEventListener("change", update);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", update);
+      reducedMotion.removeEventListener("change", update);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, [N]);
+
+  return (
+    <>
+      {/* Empty scroll-driving section: provides scroll length only. */}
+      <section
+        ref={sectionRef}
+        aria-hidden
+        style={{ height: sectionHeight, position: "relative" }}
+      />
+
+      {/* Real position: fixed pin — natively anchored to viewport, no JS lag.
+          data-carousel-pin lets Hero's clip-path scope its polaroid lookup
+          to ONLY the carousel polaroid (not CompactList polaroids which
+          share the .bg-white.p-3.pb-14 class). Without this, crossing the
+          800px breakpoint upward briefly resolves the selector to a
+          CompactList polaroid (CompactList hasn't unmounted yet), which
+          sits centered in the page → Hero clips to ~50% and gets stuck. */}
+      <div
+        ref={fixedRef}
+        data-carousel-pin
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          height: "100vh",
+          overflow: "hidden",
+          opacity: 1,
+          pointerEvents: "none",
+          zIndex: 1,
+        }}
+      >
+        {/* Polaroid row, vertically centered, JS updates translate3d for X. */}
+        <div
+          ref={polaroidsRef}
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: 0,
+            display: "flex",
+            // Standard scroll-0 state (entryT=1, p=0, LANDING_OFFSET=13vw).
+            // The layout effect adds entry clearance on narrow desktops before paint.
+            // entryX = 100vw, so translateX = 100vw - 13vw = 87vw → polaroid 0
+            // sits off-screen right. Prevents flash on first paint before the
+            // scroll handler runs.
+            transform: "translate3d(87vw, -50%, 0)",
+            willChange: "transform",
+            zIndex: 1,
+          }}
+        >
+          {PROJECTS.map((p, i) => (
+            <div
+              key={`${p.year}-${p.title}`}
+              style={{
+                width: "100vw",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flex: "0 0 100vw",
+                // Slot is the 100vw empty area; pointer-events: none lets clicks
+                // outside the polaroid card fall through to the hero. The
+                // wrapper inside re-enables `auto` for the polaroid card itself.
+                pointerEvents: "none",
+              }}
+            >
+              <div
+                ref={(el) => {
+                  polaroidItemRefs.current[i] = el;
+                }}
+                style={{
+                  willChange: "transform",
+                  transformOrigin: "center center",
+                  pointerEvents: "auto",
+                }}
+              >
+                {p.polaroids?.length ? (
+                  <PolaroidStack
+                    items={p.polaroids}
+                    side="right"
+                    index={i}
+                    year={p.year}
+                    title={p.title}
+                    fanOnScroll
+                  />
+                ) : (
+                  <div
+                    style={{
+                      fontFamily: "var(--font-caveat), cursive",
+                      color: "#cccccc",
+                      fontSize: "1.5rem",
+                    }}
+                  >
+                    no photos for this one :)
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Per-project text overlays — sit BEHIND the polaroid row at viewport
+            center; revealed when the polaroid slides past. */}
+        <div style={{ position: "absolute", inset: 0, zIndex: 0, pointerEvents: "none" }}>
+          {PROJECTS.map((p, i) => (
+            <ProjectSlide
+              key={`${p.year}-${p.title}-text`}
+              project={p}
+              index={i}
+              total={N}
+              progress={progress}
+              entryT={entryProgress}
+            />
+          ))}
+        </div>
+      </div>
+    </>
+  );
+}
+
+function CompactList() {
+  return (
+    <section className="max-w-md mx-auto px-6 py-16 flex flex-col gap-16">
+      {PROJECTS.map((project, index) => (
+        <div key={`${project.year}-${project.title}`} className="flex flex-col items-center gap-6">
+          <div className="w-full">
+            {project.year && (
+              <span
+                className="block mb-1"
+                style={{
+                  fontFamily: "var(--font-caveat), cursive",
+                  color: "#999999",
+                  fontSize: "1.05rem",
+                }}
+              >
+                {project.year}
+              </span>
+            )}
+            <h3
+              className="text-3xl mb-2 leading-tight"
+              style={{
+                fontFamily: "var(--font-playfair), serif",
+                fontWeight: 300,
+                color: "#222222",
+              }}
+            >
+              {project.link ? (
+                <a
+                  href={project.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-link"
+                  style={{ color: "inherit", textDecoration: "none" }}
+                >
+                  {project.title}
+                  <ExternalLinkIcon />
+                </a>
+              ) : (
+                project.title
+              )}
+            </h3>
+            <HeightSmoother>
+              <p
+                className="mb-3 description-blob"
+                style={{
+                  fontFamily: "var(--font-caveat), cursive",
+                  fontWeight: 400,
+                  color: "#444444",
+                  fontSize: "1.25rem",
+                  lineHeight: 1.4,
+                  position: "relative",
+                }}
+              >
+                <DescriptionWithMore short={project.description} full={project.fullDescription} />
+              </p>
+            </HeightSmoother>
+            {/* Tags hidden for now
+            {project.tags?.length ? (
+              <div
+                className="mb-2"
+                style={{
+                  fontFamily: "monospace",
+                  color: "#999999",
+                  fontSize: "0.7rem",
+                  letterSpacing: "0.02em",
+                }}
+              >
+                {project.tags.join(" · ")}
+              </div>
+            ) : null}
+            */}
+            <Badges project={project} align="left" marginTop="1.5rem" />
+          </div>
+          {project.polaroids?.length ? (
+            <PolaroidStack
+              items={project.polaroids}
+              side="right"
+              index={index}
+              year={project.year}
+              title={project.title}
+            />
+          ) : null}
+        </div>
+      ))}
+    </section>
+  );
+}
+
+export default function Timeline() {
+  const compact = useIsCompact();
+
+  if (compact === null) return <div style={{ minHeight: "100vh" }} />;
+
+  return (
+    <div className="relative">
+      {compact ? <CompactList /> : <Carousel />}
+      {/* More-projects link hidden for now.
+      <div className={compact ? "pb-3 text-center" : "pt-12 pb-3 text-center"}>
+        <a
+          href="/more"
+          className="inline-flex items-center gap-2 px-5 py-2.5 hover:underline inline-link"
+          style={{
+            color: "#999999",
+            fontFamily: "var(--font-caveat), cursive",
+            fontWeight: 400,
+            fontSize: "1.15rem",
+            textDecoration: "none",
+          }}
+        >
+          & 68 more from 2013 → 2026
+        </a>
+      </div>
+      */}
+    </div>
+  );
+}
