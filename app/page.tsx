@@ -52,7 +52,7 @@ const HERO_CONTENT: HeroItem[] = [
         icon: { src: "/pally.svg", alt: "Resonance" },
       },
     },
-    { text: " " },
+    { text: "\u00a0\u00a0" },
     {
       link: {
         text: "W27",
