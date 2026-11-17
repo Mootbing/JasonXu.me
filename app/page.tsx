@@ -48,7 +48,7 @@ interface NavLink {
 // Content Constants
 const HERO_CONTENT: HeroItem[] = [
   [
-    { text: "Co-Founder @ " },
+    { text: "Building " },
     {
       link: {
         text: "Resonance",
