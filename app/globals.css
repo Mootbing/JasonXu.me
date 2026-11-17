@@ -159,7 +159,7 @@ body.inverted ::selection {
 @keyframes portfolio-in { from { opacity: 0; transform: translateX(100vw); } to { opacity: 1; transform: none; } }
 @keyframes portfolio-out { to { opacity: 0; transform: translateX(60vw); } }
 @keyframes portfolio-backdrop { from { opacity: 0; } to { opacity: 1; } }
-@media (max-width: 799px) { .portfolio-dialog { width: 100%; height: 100dvh; border-radius: 24px; } }
+@media (max-width: 799px) { .portfolio-dialog { width: 100%; height: 100dvh; border-radius: 0; } }
 @media (hover: none), (pointer: coarse) { * { cursor: auto; } .blob-cursor { display: none; } }
 @media (prefers-reduced-motion: reduce) {
   .portfolio-dialog[open], .portfolio-dialog.is-closing, .portfolio-dialog::backdrop { animation: none; }
