@@ -99,7 +99,7 @@ const HERO_CONTENT: HeroItem[] = [
     { text: " ('28)" },
   ],
   [
-    { text: "- Head of ML @ " },
+    { text: "- Project Lead @ " },
     {
       link: {
         text: "Penn Medicine",
