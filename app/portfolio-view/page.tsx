@@ -173,7 +173,7 @@ function Hero() {
           lineHeight: 1.7,
         }}
       >
-        Try swiping & clicking polaroids
+        Scroll to see more <span className="portfolio-scroll-cue" aria-hidden="true">↕</span>
       </p>
     </section>
   );
@@ -226,6 +226,9 @@ export default function Home() {
         @supports not selector(::-webkit-scrollbar) {
           html { scrollbar-width: thin; scrollbar-color: rgba(0, 0, 0, 0.22) transparent; }
         }
+        .portfolio-scroll-cue { display: inline-block; margin-left: 0.5rem; animation: portfolio-scroll-cue 1.6s ease-in-out infinite; }
+        @keyframes portfolio-scroll-cue { 0%, 100% { transform: translateY(-3px); } 50% { transform: translateY(3px); } }
+        @media (prefers-reduced-motion: reduce) { .portfolio-scroll-cue { animation: none; } }
         .inline-link { font-weight: inherit; }
         .portfolio-view * { cursor: none !important; }
       `}</style>
