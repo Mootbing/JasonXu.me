@@ -179,7 +179,7 @@ export default function Home() {
   }, []);
   return (
     <div
-      className="min-h-screen transition-colors duration-300"
+      className="portfolio-view min-h-screen transition-colors duration-300"
       style={{
         ...STYLES.montserrat,
         backgroundColor: STYLES.colors.background,
@@ -192,7 +192,7 @@ export default function Home() {
         overflowX: "clip",
       }}
     >
-      <style>{`html { scroll-behavior: smooth; scrollbar-gutter: stable; } .inline-link { font-weight: inherit; }`}</style>
+      <style>{`html { scroll-behavior: smooth; scrollbar-gutter: stable; } .inline-link { font-weight: inherit; } .portfolio-view * { cursor: none !important; }`}</style>
       {/* Fixed hero — fades out on scroll */}
       <Hero />
 

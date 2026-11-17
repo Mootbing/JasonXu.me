@@ -11,12 +11,16 @@ export default function PortfolioPanel({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     const dialog = dialogRef.current;
     const oldOverflow = document.body.style.overflow;
+    const homepageCursor = document.querySelector<HTMLElement>(".blob-cursor");
+    const oldVisibility = homepageCursor?.style.visibility ?? "";
+    if (homepageCursor) homepageCursor.style.visibility = "hidden";
     dialog?.showModal();
     document.body.style.overflow = "hidden";
     return () => {
       if (closeTimer.current) clearTimeout(closeTimer.current);
       dialog?.close();
       document.body.style.overflow = oldOverflow;
+      if (homepageCursor) homepageCursor.style.visibility = oldVisibility;
     };
   }, []);
 
