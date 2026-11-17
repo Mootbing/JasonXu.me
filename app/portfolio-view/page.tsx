@@ -153,6 +153,18 @@ function Hero() {
         </p>
       </div>
 
+      {/* Hero Heading */}
+      <h1
+        className="text-5xl md:text-6xl lg:text-7xl mb-6 leading-tight"
+        style={{
+          ...STYLES.playfair,
+          color: STYLES.colors.primary,
+        }}
+      >
+        Highlights & Projects
+      </h1>
+
+
       {/* Subtitle */}
       <p
         className="text-base md:text-lg max-w-xl mx-auto"
