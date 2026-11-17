@@ -1,6 +1,10 @@
 "use client";
 
 import Image from "next/image";
+import dynamic from "next/dynamic";
+import { useEffect, useState } from "react";
+
+const PortfolioPanel = dynamic(() => import("./components/PortfolioPanel"), { ssr: false });
 
 // Type Definitions
 interface InlineLink {
@@ -52,7 +56,7 @@ const HERO_CONTENT: HeroItem[] = [
         icon: { src: "/pally.svg", alt: "Resonance" },
       },
     },
-    { text: "\u00a0\u00a0" },
+    { text: " " },
     {
       link: {
         text: "W27",
@@ -125,12 +129,6 @@ const HERO_CONTENT: HeroItem[] = [
 
 const EMAIL = "him@jasonxu.me";
 
-const FOOTER_LINKS: readonly NavLink[] = [
-  // { href: "https://resume.jasonxu.me", label: "Resume" },
-  { href: "https://portfolio.jasonxu.me", label: "Portfolio" },
-  // { href: "https://contact.jasonxu.me", label: "Contact" },
-] as const;
-
 const STORY_LINKS: readonly NavLink[] = [
   { href: "https://17.jasonxu.me", label: "Lore" },
 ] as const;
@@ -161,6 +159,24 @@ const STYLES = {
 
 export default function Home() {
   const colors = STYLES.colors.light;
+  const [portfolioOpen, setPortfolioOpen] = useState(false);
+
+  useEffect(() => {
+    const syncHash = () => setPortfolioOpen(window.location.hash === "#portfolio");
+    syncHash();
+    window.addEventListener("hashchange", syncHash);
+    return () => window.removeEventListener("hashchange", syncHash);
+  }, []);
+
+  const openPortfolio = () => {
+    window.history.replaceState(null, "", "#portfolio");
+    setPortfolioOpen(true);
+  };
+
+  const closePortfolio = () => {
+    window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    setPortfolioOpen(false);
+  };
 
   const getHeroItemClassName = (index: number) => {
     if (index === 0) return undefined;
@@ -309,17 +325,16 @@ export default function Home() {
             className="flex flex-wrap items-center gap-x-6 gap-y-3 md:gap-x-8 mt-8 text-sm transition-colors duration-300"
             style={{ color: colors.secondary }}
           >
-            {FOOTER_LINKS.map(({ href, label }) => (
-              <a
-                key={href}
-                href={href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="nav-link"
-              >
-                {label}
-              </a>
-            ))}
+            <button
+              type="button"
+              className="nav-link"
+              aria-haspopup="dialog"
+              aria-controls="portfolio-dialog"
+              aria-expanded={portfolioOpen}
+              onClick={openPortfolio}
+            >
+              Portfolio <span aria-hidden="true" className="ml-2">→</span>
+            </button>
             {STORY_LINKS.map(({ href, label }) => (
               <a
                 key={href}
@@ -334,6 +349,7 @@ export default function Home() {
           </nav>
         </div>
       </section>
+      {portfolioOpen ? <PortfolioPanel onClose={closePortfolio} /> : null}
     </div>
   );
 }
