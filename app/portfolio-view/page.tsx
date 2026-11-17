@@ -216,7 +216,19 @@ export default function Home() {
         overflowX: "clip",
       }}
     >
-      <style>{`html { scroll-behavior: smooth; scrollbar-gutter: stable; } .inline-link { font-weight: inherit; } .portfolio-view * { cursor: none !important; }`}</style>
+      <style>{`
+        html { scroll-behavior: smooth; scrollbar-gutter: stable; }
+        html::-webkit-scrollbar { width: 3px; height: 3px; }
+        html::-webkit-scrollbar-track, html::-webkit-scrollbar-corner { background: transparent; }
+        html::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.22); border-radius: 999px; min-height: 24px; }
+        html::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.4); }
+        html::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+        @supports not selector(::-webkit-scrollbar) {
+          html { scrollbar-width: thin; scrollbar-color: rgba(0, 0, 0, 0.22) transparent; }
+        }
+        .inline-link { font-weight: inherit; }
+        .portfolio-view * { cursor: none !important; }
+      `}</style>
       <button
         type="button"
         className="portfolio-close"
