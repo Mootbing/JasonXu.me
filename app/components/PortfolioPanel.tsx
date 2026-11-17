@@ -58,7 +58,7 @@ export default function PortfolioPanel({ onClose }: { onClose: () => void }) {
     >
       <div className="portfolio-shell">
         <iframe ref={frameRef} className="portfolio-frame" src="/portfolio-view" title="Portfolio projects" />
-        <button type="button" className="portfolio-close" onClick={close} aria-label="Close portfolio" autoFocus>×</button>
+
       </div>
     </dialog>
   );

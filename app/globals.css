@@ -152,7 +152,7 @@ body.inverted ::selection {
 .portfolio-dialog.is-closing::backdrop { opacity: 0; transition: opacity 300ms; }
 .portfolio-shell { height: 100%; position: relative; overflow: hidden; border-radius: inherit; }
 .portfolio-frame { display: block; width: 100%; height: 100%; border: 0; }
-.portfolio-close { position: absolute; top: max(20px, env(safe-area-inset-top)); right: 24px; z-index: 2; font: 300 30px/1 sans-serif; color: #777; background: #fff; width: 40px; height: 40px; border: 1px solid #eee; border-radius: 50%; cursor: pointer; }
+.portfolio-close { position: absolute; top: max(20px, env(safe-area-inset-top)); right: max(20px, env(safe-area-inset-right)); z-index: 2; font: 300 30px/1 sans-serif; color: #777; background: transparent; width: 40px; height: 40px; border: 0; border-radius: 50%; cursor: none; }
 .portfolio-dialog :focus-visible { outline: 2px solid #888; outline-offset: 5px; }
 .polaroid-expanded .blob-cursor { opacity: 0; }
 .polaroid-expanded * { cursor: auto; }
@@ -169,3 +169,8 @@ body.inverted ::selection {
 body:has(#portfolio-dialog[open]) > .blob-cursor { visibility: hidden; }
 .portfolio-dialog::backdrop { cursor: default; }
 .portfolio-view * { cursor: none !important; }
+
+
+.blob-cursor.hover-circle { border-radius: 50%; background: rgba(0, 0, 0, 0.1); }
+
+.blob-cursor.hover-circle { border-radius: 50%; background: rgba(0, 0, 0, 0.1); }

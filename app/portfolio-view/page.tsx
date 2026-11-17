@@ -168,6 +168,18 @@ function Hero() {
 }
 
 export default function Home() {
+  useIsoLayoutEffect(() => {
+    const updateScrollbar = () => {
+      document.documentElement.style.setProperty(
+        "--portfolio-scrollbar-width",
+        (window.innerWidth - document.documentElement.clientWidth) + "px"
+      );
+    };
+    updateScrollbar();
+    window.addEventListener("resize", updateScrollbar);
+    return () => window.removeEventListener("resize", updateScrollbar);
+  }, []);
+
   useEffect(() => {
     const close = (event: KeyboardEvent) => {
       if (event.key === "Escape" && !document.body.classList.contains("polaroid-expanded")) {
@@ -193,6 +205,15 @@ export default function Home() {
       }}
     >
       <style>{`html { scroll-behavior: smooth; scrollbar-gutter: stable; } .inline-link { font-weight: inherit; } .portfolio-view * { cursor: none !important; }`}</style>
+      <button
+        type="button"
+        className="portfolio-close"
+        aria-label="Close portfolio"
+        onClick={() => window.parent.postMessage({ type: "close-portfolio" }, window.location.origin)}
+        style={{ position: "fixed", top: "max(20px, env(safe-area-inset-top))", right: "calc(max(20px, env(safe-area-inset-right)) - var(--portfolio-scrollbar-width, 0px))", zIndex: 10002 }}
+      >
+        ×
+      </button>
       {/* Fixed hero — fades out on scroll */}
       <Hero />
 

@@ -4,7 +4,7 @@
 
 import { useEffect, useRef } from "react";
 
-type HoverType = "header" | "contact" | "button" | "skill" | "underline";
+type HoverType = "header" | "contact" | "button" | "skill" | "underline" | "circle";
 
 interface HoverTarget {
   type: HoverType;
@@ -17,6 +17,7 @@ const HOVER_CLASSES: Record<HoverType, string> = {
   button: "hover-button",
   skill: "hover-skill",
   underline: "hover-underline",
+  circle: "hover-circle",
 };
 
 const DEFAULT_BLOB_SIZE = 20;
@@ -74,7 +75,38 @@ export default function BlobCursor() {
       const target = document.elementFromPoint(clientX, clientY) as HTMLElement;
       if (!target) return null;
 
+      const circularButton = target.closest(".portfolio-close");
+      if (circularButton) {
+        const rect = circularButton.getBoundingClientRect();
+        const diameter = Math.max(rect.width, rect.height);
+        return {
+          type: "circle",
+          bounds: new DOMRect(
+            rect.left + (rect.width - diameter) / 2,
+            rect.top + (rect.height - diameter) / 2,
+            diameter,
+            diameter
+          ),
+        };
+      }
+
       const defaultPadding = { top: 2, right: 8, bottom: 2, left: 8 };
+
+      // The portfolio close control shares this cursor, with a circular target.
+      const closeButton = target.closest(".portfolio-close");
+      if (closeButton) {
+        const rect = closeButton.getBoundingClientRect();
+        const diameter = Math.max(rect.width, rect.height);
+        return {
+          type: "circle",
+          bounds: new DOMRect(
+            rect.left + (rect.width - diameter) / 2,
+            rect.top + (rect.height - diameter) / 2,
+            diameter,
+            diameter
+          ),
+        };
+      }
 
       // Check nav links (Resume and Contact)
       const navLinks = document.querySelectorAll(".nav-link");
