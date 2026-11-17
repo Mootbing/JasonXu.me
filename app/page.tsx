@@ -333,7 +333,7 @@ export default function Home() {
               aria-expanded={portfolioOpen}
               onClick={openPortfolio}
             >
-              Portfolio <span aria-hidden="true" className="ml-2">→</span>
+              Portfolio
             </button>
             {STORY_LINKS.map(({ href, label }) => (
               <a
