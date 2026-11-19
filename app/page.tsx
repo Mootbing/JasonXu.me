@@ -133,6 +133,7 @@ const STORY_LINKS: readonly NavLink[] = [
   { href: "https://17.jasonxu.me", label: "Lore" },
   { href: "https://www.linkedin.com/in/xj1/", label: "LinkedIn" },
   { href: "https://x.com/jsonnottheween", label: "X" },
+  { href: "https://www.instagram.com/x.json1/", label: "Ig" },
 ] as const;
 
 // Style Constants
